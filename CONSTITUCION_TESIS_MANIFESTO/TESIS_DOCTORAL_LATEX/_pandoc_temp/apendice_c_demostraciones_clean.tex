@@ -1,0 +1,118 @@
+% ============================================================================
+% APÉNDICE C: DEMOSTRACIONES MATEMÁTICAS EXTENDIDAS
+% ============================================================================
+\chapter{Demostraciones Matemáticas Extendidas}
+
+
+\section{Prueba Completa del Lema de Concentración de Lévy}
+
+\begin{lemma}[Concentración de Lévy para $S^{D-1}$, forma cuantitativa]
+Sea $\mu$ la medida de probabilidad uniforme sobre $S^{D-1}$. Para cualquier función
+$1$-Lipschitz $f: S^{D-1} \to \mathbb{R}$ y cualquier $\varepsilon > 0$:
+\begin{equation}
+\mu\left(\{ \mathbf{x} : |f(\mathbf{x}) - M_f| \ge \varepsilon \}\right) \le 2 \exp\!\left(-\frac{(D-2)\varepsilon^2}{2}\right)
+\end{equation}
+donde $M_f$ es la mediana de $f$ bajo $\mu$.
+\end{lemma}
+
+\begin{proof}
+La prueba sigue la estrategia de Milman (1971) via la inecuación isoperimétrica esférica.
+
+\textbf{Paso 1: Inecuación Isoperimétrica Esférica.}
+Para todo $A \subseteq S^{D-1}$ con $\mu(A) \ge 1/2$ y $\varepsilon > 0$,
+el $\varepsilon$-neighbourhood $A_\varepsilon = \{\mathbf{x} : d(\mathbf{x}, A) < \varepsilon\}$ satisface:
+\begin{equation}
+\mu(A_\varepsilon) \ge 1 - \exp\!\left(-\frac{(D-2)\varepsilon^2}{2}\right)
+\end{equation}
+
+\textbf{Paso 2: Aplicación a la función $f$.}
+Sea $A = \{\mathbf{x} : f(\mathbf{x}) \le M_f\}$. Por definición de mediana, $\mu(A) \ge 1/2$.
+Por la condición de Lipschitz, si $d(\mathbf{x}, A) < \varepsilon$ entonces
+$f(\mathbf{x}) \le f(a) + \varepsilon \le M_f + \varepsilon$ para algún $a \in A$.
+Por lo tanto $A_\varepsilon \subseteq \{f \le M_f + \varepsilon\}$, dando:
+\begin{equation}
+\mu(f > M_f + \varepsilon) \le \mu(A_\varepsilon^c) \le \exp\!\left(-\frac{(D-2)\varepsilon^2}{2}\right)
+\end{equation}
+
+Por simetría del mismo argumento en $-f$: $\mu(f < M_f - \varepsilon) \le \exp(-\frac{(D-2)\varepsilon^2}{2})$.
+Sumando: $\mu(|f - M_f| \ge \varepsilon) \le 2\exp(-\frac{(D-2)\varepsilon^2}{2})$. $\blacksquare$
+\end{proof}
+
+\section{Prueba del Teorema de Rodrigues (Completitud de Isometría)}
+
+\begin{theorem}[Rodrigues preserva $S^{D-1}$]
+Sea $R_{\mathbf{u}\mathbf{v}}(\theta) : S^{D-1} \to S^{D-1}$ el operador definido por:
+\begin{equation}
+R(\mathbf{y}) = \mathbf{y} + \mathbf{u}\alpha + \mathbf{v}\beta, \quad
+\alpha = -\operatorname{vers}(\theta)\langle\mathbf{y},\mathbf{u}\rangle - \sin\theta\langle\mathbf{y},\mathbf{v}\rangle, \quad
+\beta = -\operatorname{vers}(\theta)\langle\mathbf{y},\mathbf{v}\rangle + \sin\theta\langle\mathbf{y},\mathbf{u}\rangle
+\end{equation}
+Entonces $\|{R(\mathbf{y}\|)}_2 = 1$ para todo $\mathbf{y} \in S^{D-1}$ y toda base ortonormal $(\mathbf{u},\mathbf{v})$.
+\end{theorem}
+
+\begin{proof}
+Denotemos $p = \langle\mathbf{y},\mathbf{u}\rangle$, $q = \langle\mathbf{y},\mathbf{v}\rangle$,
+$c = \cos\theta$, $s = \sin\theta$, $\nu = 1 - c = \operatorname{vers}(\theta)$.
+
+\begin{align}
+\|{R(\mathbf{y}\|)}^2 &= \|{\mathbf{y}\| + \alpha\mathbf{u} + \beta\mathbf{v}}^2 \\
+&= \|{\mathbf{y}\|}^2 + 2\alpha\langle\mathbf{y},\mathbf{u}\rangle + 2\beta\langle\mathbf{y},\mathbf{v}\rangle + \alpha^2\|{\mathbf{u}\|}^2 + \beta^2\|{\mathbf{v}\|}^2 + 2\alpha\beta\langle\mathbf{u},\mathbf{v}\rangle
+\end{align}
+
+Dado que $\|{\mathbf{y}\|} = 1$, $\|{\mathbf{u}\|} = \|{\mathbf{v}\|} = 1$, $\langle\mathbf{u},\mathbf{v}\rangle = 0$:
+\begin{equation}
+\|{R(\mathbf{y}\|)}^2 = 1 + 2\alpha p + 2\beta q + \alpha^2 + \beta^2
+\end{equation}
+
+Calculamos:
+\begin{align}
+\alpha &= -\nu p - sq, \quad \beta = -\nu q + sp \\
+2\alpha p + 2\beta q &= 2(-\nu p^2 - spq) + 2(-\nu q^2 + spq) = -2\nu(p^2 + q^2) \\
+\alpha^2 + \beta^2 &= \nu^2 p^2 + s^2q^2 + 2\nu spq + \nu^2q^2 + s^2p^2 - 2\nu spq \\
+&= (\nu^2 + s^2)(p^2 + q^2)
+\end{align}
+
+Usando $\nu^2 + s^2 = (1-c)^2 + \sin^2\theta = 1 - 2c + c^2 + 1 - c^2 = 2(1-c) = 2\nu$:
+\begin{equation}
+\|{R(\mathbf{y}\|)}^2 = 1 - 2\nu(p^2+q^2) + 2\nu(p^2+q^2) = 1 \quad \blacksquare
+\end{equation}
+\end{proof}
+
+\section{Prueba de la Identidad de Sherman-Morrison-Woodbury (SMW)}
+
+\begin{theorem}[Sherman-Morrison-Woodbury]
+Sea $A \in \mathbb{R}^{n\times n}$ invertible y $U \in \mathbb{R}^{n\times k}$, $C \in \mathbb{R}^{k\times k}$ invertible,
+$V \in \mathbb{R}^{k\times n}$. Entonces:
+\begin{equation}
+(A + UCV)^{-1} = A^{-1} - A^{-1}U(C^{-1} + VA^{-1}U)^{-1}VA^{-1}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Verificamos por multiplicación directa que el lado derecho, denotado $B$, satisface $(A + UCV)B = I$:
+\begin{align}
+(A+UCV)B &= I - U(C^{-1} + VA^{-1}U)^{-1}VA^{-1} \\
+&\quad + UCVA^{-1} - UCVA^{-1}U(C^{-1}+VA^{-1}U)^{-1}VA^{-1} \\
+&= I + UCVA^{-1} - U\left[I + CVA^{-1}U\right](C^{-1}+VA^{-1}U)^{-1}VA^{-1} \\
+&= I + UCVA^{-1} - UC\left[C^{-1} + VA^{-1}U\right](C^{-1}+VA^{-1}U)^{-1}VA^{-1} \\
+&= I + UCVA^{-1} - UCVA^{-1} = I \quad \blacksquare
+\end{align}
+\end{proof}
+
+\section{Prueba del Algoritmo Union-Find con Compresión de Caminos}
+
+\begin{theorem}[Complejidad de Union-Find]
+El algoritmo Union-Find con unión por rango y compresión de caminos tiene complejidad
+amortizada $\mathcal{O}(\alpha(n))$ por operación, donde $\alpha$ es la función inversa de Ackermann,
+que satisface $\alpha(n) \le 4$ para todo $n < 2^{2^{2^{2^{16}}}}$ (esencialmente constante).
+\end{theorem}
+
+\begin{proof}(Esbozo)
+La prueba de Tarjan (1975) usa la función $\alpha(n,x)$ definida como el menor $k$ tal que
+$A_k(x) \ge n$, donde $A_k$ es la función de Ackermann de orden $k$.
+
+La clave es asignar a cada nodo un valor de ``rango'' que acota la altura del árbol.
+Con compresión de caminos: cada \texttt{find} aplana el camino al representante,
+pagando trabajo extra amortizado a futuras operaciones. El análisis formal por potencial
+de Tarjan demuestra que $m$ operaciones sobre $n$ elementos toman $\mathcal{O}(m \cdot \alpha(m,n))$. $\blacksquare$
+\end{proof}

@@ -1,0 +1,37 @@
+{
+  "chapters": {
+    "n": 34,
+    "thm": 64,
+    "eq": 211
+  },
+  "facts": {
+    "n": 691,
+    "cert": 640
+  },
+  "novelties": {
+    "n": 85,
+    "ab": 0
+  },
+  "pending_topics": [
+    {
+      "topics": "[\"cayley_smw\", \"tikhonov\"]",
+      "n": 17
+    },
+    {
+      "topics": "[\"linux_ipc\", \"pmtp\"]",
+      "n": 17
+    },
+    {
+      "topics": "[\"linux_ipc\"]",
+      "n": 17
+    },
+    {
+      "topics": "[\"telepatia\", \"pmtp\"]",
+      "n": 17
+    },
+    {
+      "topics": "[\"tpu_xla\"]",
+      "n": 17
+    }
+  ]
+}

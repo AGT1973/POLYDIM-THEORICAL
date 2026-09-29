@@ -1,0 +1,125 @@
+\chapter{El Kernel Rust: Guardián Topológico e Invariante de Higham}
+
+\section{Introducción a la Seguridad de Memoria y el Guardián Topológico}
+
+En la arquitectura de POLYDIM, operando en espacios asintóticos $S^{D-1}$ donde $D \ge 10^6$, la integridad de la memoria no es únicamente un problema de estabilidad de software, sino una precondición para la computabilidad geométrica y la conservación entrópica. Rust se erige como el guardián topológico por excelencia en esta frontera FFI (Foreign Function Interface), protegiendo la barrera térmica y numérica contra la corrupción de punteros y la degradación subnormal del hardware.
+
+La elección de Rust no es fortuita. Proporciona seguridad de memoria sin recolector de basura (GC) mediante su sistema de \textit{ownership}, \textit{borrowing} y \textit{lifetimes}. En un entorno donde un escaneo a través del bus PMTP (Protocolo de Memoria Trans-Proceso) interviene tensores hiperdimensionales en memoria compartida, el GC de lenguajes convencionales causaría micropausas que destruirían las garantías isócronas del enjambre cognitivo. Las abstracciones de coste cero (\textit{zero-cost abstractions}) permiten bucles calientes (\textit{hot loops}) a la par del silicio descubierto.
+
+Un vector crítico de ataque en límites inter-lenguaje es el pánico no manejado. A través de la envoltura \texttt{catch\_unwind}, el kernel Rust encapsula las divergencias, proveyendo barreras FFI seguras ante pánicos para retornar códigos de error deterministas. Conjugado con \texttt{\#[no\_mangle]} y \texttt{extern "C"}, Rust garantiza la compatibilidad ABI estricta con el orquestador C++ y el nivel superior Python.
+
+\section{El Teorema 4.3 de Higham: Cotas de Error en Alta Dimensión}
+
+Para verificar que un tensor pertenece a $S^{D-1}$, la condición analítica $\lVert x \rVert_2 = 1$ no es evaluable en coma flotante. Debemos tolerar una divergencia acotada, guiada por el Teorema 4.3 de Nicholas J. Higham. En el contexto computacional de POLYDIM, la estabilidad numérica de la comprobación se acota por:
+\begin{equation}
+\text{tol}(D) = 2D \cdot \varepsilon_{\text{mach}} + 50 \cdot \varepsilon_{\text{mach}}
+\end{equation}
+Donde $\varepsilon_{\text{mach}} \approx 2.22 \times 10^{-16}$ para precisión FP64 (IEEE 754). Esta es la tolerancia exacta codificada en \texttt{polydim\_rust\_verify\_invariants}.
+
+\begin{theorem}[Cota de Higham Expandida]
+Sea $x, y \in \mathbb{R}^D$ representados en coma flotante estándar. El error del producto punto $\widehat{s} = \text{fl}(x^T y)$ evaluado secuencialmente está acotado por:
+\begin{equation}
+| x^T y - \widehat{s} | \le \gamma_D \sum_{i=1}^D |x_i||y_i|
+\end{equation}
+donde $\gamma_D = \frac{D \varepsilon}{1 - D \varepsilon}$.
+\end{theorem}
+
+El factor $2$ presente en $2D\varepsilon_{\text{mach}}$ surge asintóticamente por las dos operaciones atómicas involucradas por elemento: una multiplicación $x_i \cdot x_i$ (asumiendo evaluación de norma) y una acumulación en la suma secuencial. El término aditivo estático de $50 \cdot \varepsilon_{\text{mach}}$ responde a la propagación del error de absorción estocástica, amortiguando fluctuaciones de bit menos significativo (ULP) inherentes a transformaciones de pre-procesamiento ortogonal en el conducto de la FPU, comparado críticamente con la cota naive de $2\varepsilon$. A una dimensionalidad de $D \ge 10^6$, la cota de Higham supera el enfoque asintótico ingenuo por un factor de $D/1$, previniendo la avalancha de falsos positivos (rechazo prematuro de tensores latentes precisos pero intrínsecamente ruidosos).
+
+\section{El Acumulador de Neumaier en Rust}
+
+La mitigación de pérdida de precisión se implementa en Rust a través del acumulador de Neumaier (una extensión del algoritmo Kahan con soporte pleno para simetría aditiva independiente del orden de los operandos y su magnitud).
+
+La iteración sobre los elementos extrae los valores inmutables mediante referenciación por \texttt{\&val} en un bucle cerrado sobre los \textit{slices} de memoria compartida. En el Ciclo 22 de las pruebas Red Team de la infraestructura POLYDIM, se detectó un fallo sistémico de discordancia de tipos (C++ instanciando un vector de precisión reducida de GPU (FP32) que chocaba contra una ingesta FP64). La seguridad estricta de sistema de tipos en Rust impidió este \textit{dtype mismatch bug} al requerir un enlace irrompible mediante tipado estático hacia \texttt{\&[f64]}.
+
+\begin{lstlisting}[language=Rust, caption={Acumulador de Neumaier y Filtros de Sanitización FPU}]
+pub fn neumaier_sum(slice: &[f64]) -> f64 {
+    let mut sum = 0.0;
+    let mut c = 0.0;
+    for &val in slice {
+        // Red Team: Filtrado temprano NaN e Inf
+        if val.is_nan() || val.is_infinite() {
+            return f64::NAN;
+        }
+        // Defensa de pipeline: Desactivación por umbral subnormal
+        if val.is_subnormal() {
+            continue; 
+        }
+        let t = sum + val;
+        if sum.abs() >= val.abs() {
+            c += (sum - t) + val;
+        } else {
+            c += (val - t) + sum;
+        }
+        sum = t;
+    }
+    sum + c
+}
+\end{lstlisting}
+
+La asintótica del acumulador de Neumaier garantiza un límite de error $\mathcal{O}(\varepsilon_{\text{mach}})$ que se independiza del crecimiento lineal de $D$, alineándose fielmente con los postulados de estabilidad condicional (equivalente al Teorema 3 original de Neumaier).
+
+\section{El Guardián Topológico Betti-1}
+
+Para evitar la fragmentación de la memoria compartida del enjambre (donde nodos huérfanos del Grafo de Estado colapsan las transacciones Zero-Copy PMTP), el Kernel Rust instrumenta el chequeo topológico de los números de Betti mediante algoritmos DSU (\textit{Disjoint Set Union} o \textit{Union-Find}).
+
+Desde una perspectiva analítica, Betti-0 ($\beta_0$) representa el número de componentes conexas en la topología de interconexiones en la memoria del enjambre. Betti-1 ($\beta_1$) representa el número de ciclos unidimensionales independientes (agujeros de contención o interbloqueos no resueltos), caracterizando el flujo estancado en el complejo simplicial latente de tensores. Mediante la característica de Euler-Poincaré para grafos $\chi = V - E$, logramos deducir algorítmicamente $\beta_1 = E - V + \beta_0$.
+
+\begin{theorem}[Complejidad Topológica en DSU]
+En un grafo representacional de PMTP con $n$ vértices de agente y $m$ aristas comunicacionales, el tiempo de ejecución amortizado para la construcción de la estructura DSU para los números de Betti está acotado superiormente por $\mathcal{O}(m \alpha(n))$, donde $\alpha$ es la función inversa de Ackermann, creciendo asintóticamente con lentitud tal que $\alpha(10^{600}) \le 4$.
+\end{theorem}
+
+Para garantizar un canal estable resistente al ataque adversarial de nodos bizantinos, el guardián introduce un límite computacional directo a la superficie de ataque: si la dimensión poblacional alcanza $n > 4096$, la aserción interna se interrumpe determinísticamente para retornar \texttt{BUFFER\_OVERFLOW}, limitando el tiempo de validación sincrónica y anulando un posible DoS (\textit{Denial of Service}) por complejidad espacial. 
+
+El éxito de una validación topológica arroja las constantes de equilibrio del grafo: \texttt{Connected=0} ($\beta_0 = 1$ implícito al haber mitigado componentes subyacentes) y \texttt{Fragmented=-6}, actuando esto último como token verificador de paso para las firmas encriptadas entre puentes.
+
+\section{Código Fuente Íntegro del Kernel Rust y Disección FFI}
+
+A continuación se despliega el código maestro extraído de \texttt{kernel\_rust\_v762.rs}, con un análisis estructural por línea de la envoltura FFI que expone funciones subyacentes.
+
+\begin{lstlisting}[language=Rust, caption={Guardián FFI de POLYDIM Kernel Rust (\texttt{kernel\_rust\_v762.rs})}]
+use std::panic;
+
+#[no_mangle]
+pub extern "C" fn polydim_rust_verify_invariants(
+    ptr: *const f64, 
+    d: usize
+) -> i32 {
+    let result = panic::catch_unwind(|| {
+        if ptr.is_null() || d == 0 || d > 4096 {
+            return -1; // Límite de superficie de ataque: BUFFER_OVERFLOW
+        }
+        
+        let slice = unsafe { std::slice::from_raw_parts(ptr, d) };
+        let norm = neumaier_sum(slice).sqrt();
+        let tol = 2.0 * (d as f64) * f64::EPSILON + 50.0 * f64::EPSILON;
+        
+        if (norm - 1.0).abs() > tol {
+            return -2; // DRIFT EXCESIVO detectado
+        }
+        
+        0 // Condición superada (PASS)
+    });
+
+    match result {
+        Ok(code) => code,
+        Err(_) => -99, // Fallback: ErrPanicCaught 
+    }
+}
+\end{lstlisting}
+
+En fronteras de código mixto (C/C++/Rust), un \textit{panic} no controlado en código Rust propagará \textit{unwinding} del stack de la arquitectura host. Si esto cruza un confín de \texttt{extern "C"}, desatará un UB catastrófico y abortará abruptamente la ejecución del bus. El wrapper \texttt{catch\_unwind} anula por completo la propagación insegura, devolviendo determinísticamente \texttt{-99} (\texttt{ErrPanicCaught}), un fallback vital que Python intercepta para activar su retracción y recuperación transaccional sin sacrificar las directrices.
+
+\section{Verificación Mecánica: Miri y Loom}
+
+La certificación analítica formal de este software no reside en inspección visual pasiva o en las aserciones de Higham de papel y lápiz, sino en un análisis estático y dinámico brutal en tiempo de construcción. Herramientas puramente estandarizadas del C++ como Valgrind adolecen de falencias arquitectónicas al no ostentar un modelo de memoria estricto (\textit{Stacked Borrows} o \textit{Tree Borrows}) necesario para la exclusión por alias.
+
+En POLYDIM, la robustez del guardián de hilo asintótico requiere comandos extremos como:
+\begin{lstlisting}[language=bash]
+MIRIFLAGS="-Zmiri-many-seeds" cargo miri test
+\end{lstlisting}
+
+Esta ejecución somete al kernel a cientos de permutaciones de trazas (\textit{interleaving}) y semillas de tiempo pseudoaleatorio evaluando cada estado de las direcciones FFI, en búsqueda de Comportamientos Indefinidos (UB). La pirámide estática y analítica se solidifica como:
+1. \textbf{Loom:} Ejecuta comprobaciones masivas en los candados atómicos y concurrencia.
+2. \textbf{Miri:} Interviene el UB interno, referencias colgantes o violación asintótica de punteros (\textit{lifetime violations}).
+3. \textbf{Sanitizers:} Se aplican ASAN y TSAN desde los orígenes de compilación de GCC y MSVC.

@@ -1,0 +1,260 @@
+% ============================================================================
+% CAPÍTULO 21: METODOLOGÍA RED TEAM — 13 RONDAS DE AUDITORÍA ADVERSARIAL
+% ============================================================================
+\chapter{Metodología Red Team: 300+ Ciclos de Auditoría Adversarial}
+\label{ch:red_team}
+
+\epigraph{El Bulldog no ataca al dueño.\\
+Ataca el código que el dueño escribió.\\
+La diferencia es la única razón por la que el código mejora.}{--- Protocolo Red Team, Constitución POLYDIM}
+
+\section{Introducción: La Auditoría Adversarial como Metodología de Investigación}
+
+La metodología Red Team de POLYDIM invierte el paradigma habitual de desarrollo de software:
+en vez de escribir código y luego buscar bugs, se \textit{buscan bugs primero} y se
+escribe el código que los corrige. El proceso es:
+
+\begin{enumerate}
+\item \textbf{Atacar:} Un agente adversarial (Red Team) ataca el código existente buscando
+bugs en 5 dimensiones: concurrencia, numerología, FFI, plataforma, y semántica del protocolo.
+
+\item \textbf{Documentar:} Cada bug encontrado recibe un ciclo numerado (C1--C300+) con:
+la descripción exacta del bug, el escenario de reproducción, y el parche propuesto.
+
+\item \textbf{Corregir:} El código se corrige siguiendo el parche propuesto.
+
+\item \textbf{Verificar:} La corrección se verifica con un test específico que reproduce
+el bug y confirma que el parche lo elimina.
+
+\item \textbf{Repetir:} El Red Team ataca el código corregido, buscando bugs en los
+propios parches (Ronda 3: Ciclos 26--30 atacaron específicamente los parches de las
+Rondas 1--2).
+\end{enumerate}
+
+\section{Las 13 Rondas: Estructura y Progresión}
+
+\begin{longtable}{rp{3cm}p{8cm}}
+\toprule
+\textbf{Ronda} & \textbf{Ciclos} & \textbf{Foco} \\
+\midrule
+1 & P0-1 -- P2 (16 bugs) & Bugs críticos de argtypes, build, UAF básico, SLERP antipodal \\
+2 & C1--C25 (25 ciclos) & Quiescencia SeqCst, dim=0 UB, max-seq reading, dtype/endian \\
+3 & C26--C35 (10 ciclos) & Red Team de los propios parches; entregables integrados \\
+4 & C36--C50 (15 ciclos) & Performance, reproducibilidad, ``Zero-Copy'' honestidad \\
+5 & C51--C75 (25 ciclos) & Fuzzing, property tests, mutation testing \\
+6 & C76--C100 & TLA+ formal spec, Loom verification \\
+7 & C101--C150 & V110 FJLT (Fast Johnson-Lindenstrauss Transform) \\
+8 & C151--C200 & V111 ring buffer, lending semantics \\
+9 & C201--C250 & Integration test suite, CI pipeline \\
+10 & C251--C275 & Numerical edge cases: subnormales, overflow, antipodal \\
+11 & C276--C300 & Protocol formalization, phase definitions \\
+12 & C301--C325 & V762 final hardening, ABI contract documentation \\
+13 & C326+ & Convergencia: todos los tests PASS, certificación final \\
+\bottomrule
+\caption{Las 13 rondas del Red Team adversarial de POLYDIM}
+\label{tab:rondas}
+\end{longtable}
+
+\section{Ronda 1: Los 16 Bugs Críticos P0--P2}
+
+Los bugs de Ronda 1 fueron los más devastadores: afectaban la corrección básica del sistema.
+
+\subsection{P0-1: argtypes Sin Declarar en ctypes}
+
+\textbf{Descripción:} Python ctypes sin \texttt{argtypes} declarados pasa argumentos
+como enteros nativos de Python. Para un puntero a \texttt{double*}, ctypes pasa
+el entero del \textit{value} del objeto Python, no la dirección de memoria. El resultado
+es que el kernel C++ lee desde una dirección inválida.
+
+\textbf{Código roto:}
+\begin{lstlisting}[style=pythonstyle, caption={P0-1: argtypes ausentes (ROTO)}, label=lst:p01_bug]
+# ROTO: sin argtypes, ctypes pasa Python integers como argumento
+result = cpp_lib.slerp_v109(p_ptr, q_ptr, t_val, out_ptr, D)
+# El kernel lee desde la dirección INTEGER del objeto Python
+# -> SIGSEGV o datos corruptos silenciosos
+\end{lstlisting}
+
+\textbf{Parche P0-1:}
+\begin{lstlisting}[style=pythonstyle, caption={P0-1: argtypes completos (CORRECTO)}, label=lst:p01_fix]
+# CORRECTO: argtypes declaran el tipo exacto de cada argumento
+cpp_lib.slerp_v109.argtypes = [
+    ctypes.POINTER(ctypes.c_double),  # p
+    ctypes.POINTER(ctypes.c_double),  # q
+    ctypes.c_double,                  # t
+    ctypes.POINTER(ctypes.c_double),  # out
+    ctypes.c_size_t                   # D
+]
+cpp_lib.slerp_v109.restype = ctypes.c_int32
+\end{lstlisting}
+
+\subsection{P1-4: SLERP Antipodal --- Norma 1.2247}
+
+\textbf{Descripción:} La fórmula SLERP~\eqref{eq:slerp} es indefinida cuando
+$\langle\mathbf{p}, \mathbf{q}\rangle = -1$ (vectores antipodales), porque
+$\Omega = \pi$ y $\sin(\pi) = 0$, haciendo la fórmula $0/0$.
+
+Para vectores \textit{casi} antipodales, la fórmula produce un vector con norma
+$1.2247... = \sqrt{3/2}$ en lugar de $1.0$.
+
+\textbf{Análisis matemático:}
+Sean $\mathbf{p} = (1, 0, 0)$ y $\mathbf{q} = (-1+\varepsilon, 0, 0)/\norm{(-1+\varepsilon,0,0)}$.
+Para $\varepsilon \to 0^+$:
+\begin{equation}
+\Omega \to \pi^-, \quad \sin\Omega \to 0^+
+\end{equation}
+La fórmula SLERP:
+\begin{equation}
+\gamma(0.5) = \frac{\sin(0.5\Omega)\mathbf{p} + \sin(0.5\Omega)\mathbf{q}}{\sin\Omega}
+\to \frac{\sin(\pi/2)(\mathbf{p} + \mathbf{q})}{\sin\pi}
+= \frac{1 \cdot (\mathbf{p} + \mathbf{q})}{0} \to \text{división por cero}
+\end{equation}
+
+En aritmética de punto flotante, esto no produce NaN directamente sino un vector
+con norma $\approx \sqrt{3/2}$ por acumulación de errores de cancelación.
+
+\textbf{Parche P1-4 --- Gram-Schmidt para el caso antipodal:}
+\begin{lstlisting}[style=cppstyle, caption={P1-4: Gram-Schmidt antipodal (CORRECTO)}, label=lst:antipodal_fix]
+// Detectar caso antipodal: |<p,q>| > 1 - epsilon_antipodal
+double dot_pq = dot_product(p, q, D);
+if (dot_pq < -1.0 + 1e-9) {
+    // Construir vector perpendicular a p usando Gram-Schmidt
+    // Elegir e_j el vector canónico más perpendicular a p
+    size_t j = argmin_abs_component(p, D);
+    double e_j[D] = {0}; e_j[j] = 1.0;
+    // v_perp = e_j - <e_j, p> * p (Gram-Schmidt)
+    double proj = p[j]; // <e_j, p> = p[j]
+    for (size_t i = 0; i < D; ++i) {
+        v_perp[i] = e_j[i] - proj * p[i];
+    }
+    normalize(v_perp, D); // ||v_perp|| = 1
+    // Ahora SLERP desde p hasta -p pasando por v_perp
+    // gamma(0.5) = cos(pi/2)*p + sin(pi/2)*v_perp = v_perp
+    return v_perp; // La geodésica por el polo norte
+}
+\end{lstlisting}
+
+\section{Ronda 2: Los 25 Ciclos (C1--C25)}
+
+La Ronda 2 encontró bugs más sutiles en la concurrencia y el protocolo:
+
+\subsection{C1: UAF por Ordering Incorrecto}
+
+Ya analizado en detalle en el Capítulo~\ref{ch:seqlock}. El corazón del problema:
+Acquire/Release no implica orden total, SeqCst sí.
+
+\subsection{C2: Undefined Behavior con Dimensión Cero}
+
+\begin{lstlisting}[style=ruststyle, caption={C2: guard dim=0 (CORRECTO)}, label=lst:dim0_guard]
+// Sin guard: dim=0 produce:
+// - alloc de 0 bytes -> puntero nulo o comportamiento indefinido
+// - divisiones por cero en cálculos de norma
+// - bucle vacío con acumuladores no inicializados
+pub fn pmtp_node_new(dim: usize) -> *mut PmtpNode {
+    if dim == 0 {
+        return std::ptr::null_mut(); // -2 en el ABI
+    }
+    if dim > DIM_MAX { // DIM_MAX = 1 << 27 = 128M elementos
+        return std::ptr::null_mut();
+    }
+    // ... allocación segura ...
+}
+\end{lstlisting}
+
+\subsection{C22: Overread por dtype Erróneo}
+
+Detallado en el Capítulo~\ref{ch:seqlock}: recibir \texttt{float32} cuando el
+kernel espera \texttt{float64} produce una lectura de $2\times$ el buffer asignado.
+
+\subsection{C23: El Contrato ABI}
+
+El Ciclo 23 descubrió que sin documentación explícita, cada integrador implementa
+sus propias interpretaciones de los códigos de retorno. La consecuencia: integración
+incorrecta de retry logic que puede llevar a UAF por reintentar \texttt{free} después de éxito.
+
+\section{Ronda 3: Atacar los Propios Parches}
+
+El aspecto más valioso metodológicamente de la Ronda 3 fue descubrir bugs en los
+parches de las Rondas anteriores:
+
+\begin{description}
+\item[Ciclo 26 (auto-crítica del C3):] El parche C3 (lectura por max-seq) fue roto
+con múltiples writers: el seq se asigna atómicamente pero el \textit{commit} ocurre
+en orden no determinista. La solución correcta (consumidor con filtro monotónico)
+estaba disponible desde el Ciclo 21 pero en el lado equivocado (productor).
+
+\item[Ciclo 27 (auto-crítica del C1):] El CAS para DESTROYING en free fue reescrito
+en la Ronda 2 de manera que omite la verificación cuando el estado ya es DESTROYING.
+Esto permite que dos destructores simultáneos pasen la verificación.
+
+\item[Ciclo 28 (hueco sin parche):] Un panic en medio de una operación de escritura
+deja \texttt{active\_ops $\ge$ 1} permanentemente (el nodo queda inliberable).
+Ninguna ronda anterior había abordado este caso. La solución: guards RAII con Drop.
+\end{description}
+
+La lección metodológica: \textbf{los parches también necesitan ser auditados}.
+La auditoría de los propios parches es la práctica más valiosa de ingeniería de software.
+
+\section{El Ciclo 38: La Matemática Correcta del Umbral}
+
+El Ciclo 38 es el ejemplo perfecto de la diferencia entre un umbral \textit{ad hoc}
+y un umbral \textit{matemáticamente correcto}:
+
+\textbf{El umbral roto (V109):}
+\begin{equation}
+\text{si } \norm{\mathbf{p}} < 10^{-15} \text{ entonces rechazar}
+\end{equation}
+
+Este umbral rechaza vectores perfectamente válidos de norma $10^{-200}$ (que
+son normalizables sin pérdida en doble precisión). El único rango que es
+genuinamente no normalizable es:
+
+\begin{equation}
+\text{si } \norm{\mathbf{p}} < \text{DBL\_MIN} = 2^{-1022} \approx 2.23 \times 10^{-308} \text{ entonces rechazar}
+\end{equation}
+
+porque $1/\norm{\mathbf{p}}$ desborda a $\infty$ si y solo si $\norm{\mathbf{p}} < \text{DBL\_MIN}$.
+
+\begin{theorem}[Umbral Matemáticamente Correcto para SLERP]
+\label{thm:slerp_threshold}
+La normalización de $\mathbf{p} \in \R^D$ en doble precisión produce overflow si y solo si
+$\norm{\mathbf{p}}_2 < \text{DBL\_MIN} = 2^{-1022}$.
+Para $\norm{\mathbf{p}}_2 \ge \text{DBL\_MIN}$, la operación
+$\hat{\mathbf{p}} = \mathbf{p}/\norm{\mathbf{p}}_2$ produce un resultado finito.
+\end{theorem}
+
+\begin{proof}
+$1/\norm{\mathbf{p}}_2$ es representable en doble precisión si y solo si
+$1/\norm{\mathbf{p}}_2 \le \text{DBL\_MAX} = (2 - 2^{-52}) \cdot 2^{1023}$.
+Esto es equivalente a $\norm{\mathbf{p}}_2 \ge 1/\text{DBL\_MAX} = \text{DBL\_MIN}$.
+\end{proof}
+
+\section{Metodología: La Pirámide de Verificación}
+
+POLYDIM adopta una pirámide de verificación de cuatro niveles:
+
+\begin{description}
+\item[Nivel 1 --- Unit Tests (Rápido):] Cada función tiene tests parametrizados
+que cubren los casos normales y los casos límite identificados por el Red Team.
+Tiempo: segundos.
+
+\item[Nivel 2 --- Property Tests (Minutos):] Las propiedades matemáticas
+(invarianza de norma, monotonicidad del SEQLock, correctitud del Gram-Schmidt)
+se verifican con \textit{property-based testing} (Hypothesis en Python, proptest en Rust).
+Tiempo: minutos.
+
+\item[Nivel 3 --- Loom (Exhaustivo, Horas):] Todas las entrelazados posibles de
+operaciones atómicas se exploran exhaustivamente para el protocolo de quiescencia.
+Tiempo: horas.
+
+\item[Nivel 4 --- Miri (UB Detection, Horas):] El intérprete Miri de Rust detecta
+Undefined Behavior que los compiladores optimizan silenciosamente. Cubre:
+use-after-free, reads de memoria no inicializada, violaciones de aliasing.
+\end{description}
+
+\begin{certifiedbox}
+\textbf{Estado V762:}
+Nivel 1: 5/5 suites PASS, Exit Code 0.
+Nivel 2: property tests para Rodrigues, SLERP, Neumaier --- todos PASS.
+Nivel 3: Loom --- 0 violaciones en $> 10^6$ entrelazados.
+Nivel 4: Miri --- pendiente (requiere Linux, integración en CI planificada para V770).
+\end{certifiedbox}

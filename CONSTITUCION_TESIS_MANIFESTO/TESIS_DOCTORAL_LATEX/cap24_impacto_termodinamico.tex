@@ -1,0 +1,140 @@
+% ============================================================================
+% CAPÍTULO 24: IMPACTO TERMODINÁMICO — EL COSTO ENERGÉTICO DE LA TOKENIZACIÓN
+% ============================================================================
+\chapter{Impacto Termodinámico: El Costo Energético del Gusano 1D}
+\label{ch:termodynamics}
+
+\epigraph{El desperdicio energético no es un número abstracto.\\
+Es watts-hora en el medidor de electricidad\\
+de un datacenter en Buenos Aires.}{--- LATAM Economic Veto, Regla 20}
+
+\section{Energía y Computación: El Límite de Landauer}
+
+El \textit{Principio de Landauer} establece el límite termodinámico mínimo de la
+energía disipada al borrar un bit de información:
+
+\begin{equation}
+E_{\text{Landauer}} = k_B T \ln 2 \approx 2.85 \times 10^{-21} \text{ J a } 25^\circ\text{C}
+\label{eq:landauer}
+\end{equation}
+
+donde $k_B = 1.38 \times 10^{-23}$ J/K es la constante de Boltzmann y $T$ es la
+temperatura absoluta. Este es el límite físico de la reversibilidad computacional.
+
+La tokenización de POLYDIM destruye \textbf{17225 bits por inferencia} (Capítulo~\ref{ch:dpi}).
+El costo de Landauer de esta destrucción irreversible es:
+
+\begin{equation}
+E_{\text{tokens}} = 17225 \times 2.85 \times 10^{-21} \approx 4.9 \times 10^{-17} \text{ J}
+\end{equation}
+
+Esto es negligible en absoluto, pero el costo real viene del cómputo necesario
+para realizar la tokenización, no del Principio de Landauer.
+
+\section{El Costo Real: FLOPs y Energía de Datacenter}
+
+El consumo energético real de la tokenización en un datacenter moderno está
+determinado por:
+
+\begin{enumerate}
+\item La \textbf{eficiencia de cómputo}: una GPU NVIDIA A100 realiza
+$\approx 10^{12}$ FLOPs/Watt/segundo.
+
+\item El número de FLOPs necesarios para la tokenización:
+\begin{equation}
+\text{FLOPs}_{\text{encode}} = D \times |V| = 4096 \times 32768 \approx 1.34 \times 10^8 \text{ FLOPs}
+\end{equation}
+
+\item El consumo energético por tokenización:
+\begin{equation}
+E_{\text{encode}} = \frac{1.34 \times 10^8 \text{ FLOPs}}{10^{12} \text{ FLOPs/J}} = 1.34 \times 10^{-4} \text{ mJ}
+\end{equation}
+\end{enumerate}
+
+Comparado con el costo de una copia de memoria (memcpy) equivalente:
+\begin{equation}
+E_{\text{memcpy}} = \frac{D \times 8 \text{ bytes}}{10^{11} \text{ bytes/J}} = \frac{32768 \text{ bytes}}{10^{11}} = 3.28 \times 10^{-7} \text{ mJ}
+\end{equation}
+
+El ratio de ineficiencia energética de la tokenización vs memcpy:
+\begin{equation}
+\frac{E_{\text{encode}}}{E_{\text{memcpy}}} = \frac{1.34 \times 10^{-4}}{3.28 \times 10^{-7}} \approx 408\times
+\end{equation}
+
+Para encode \textit{más} decode (pipeline completo): $\approx 816\times$.
+Para el pipeline de 4 agentes (4 encode + 4 decode): $\approx 3264\times$.
+
+\section{La Escala Global: 1 Millón de Consultas por Segundo}
+
+Los modelos de lenguaje modernos en producción (ChatGPT, Claude, Gemini) procesan
+del orden de $10^6$ consultas por segundo. El desperdicio energético global:
+
+\begin{align}
+\text{Desperdicio diario}_{\text{tokenización}} &= 10^6 \text{ req/s} \times 86400 \text{ s} \times 816 \times E_{\text{memcpy}} \\
+&= 10^6 \times 86400 \times 816 \times 3.28 \times 10^{-7} \text{ mJ} \\
+&\approx 2.3 \times 10^7 \text{ J} \approx 6.4 \text{ kWh/día}
+\end{align}
+
+Por supuesto, esto es el overhead de energía atribuible \textit{solo} a la
+conversión de formato. El cómputo de inferencia real domina.
+
+\section{El Impacto Económico: Perspectiva LATAM}
+
+Desde Argentina, donde la electricidad tiene un costo mixto de
+$\approx \$0.08$/kWh (subsidiado) a $\$0.20$/kWh (tarifa real de datacenter):
+
+\begin{equation}
+\text{Costo anual}_{\text{tokenización}} \approx 6.4 \text{ kWh/día} \times 365 \times \$0.15 \approx \$350/\text{año}
+\end{equation}
+
+Más relevante para POLYDIM es el \textbf{multiplicador de capacidad}: si PMTP
+permite que 10 agentes hagan el trabajo de 14 (por la reducción de overhead),
+el costo de infraestructura de un laboratorio se reduce en $\approx 40\%$:
+
+\begin{equation}
+\text{Multiplicador POLYDIM} = \frac{\text{GPUs necesarias con tokens}}{\text{GPUs necesarias con PMTP}} \approx 14/10 = 1.4\times
+\end{equation}
+
+En términos de dólares, para un cluster de 100 GPUs A100 a \$3/hora:
+\begin{equation}
+\text{Ahorro anual} = 40 \text{ GPUs} \times \$3/\text{hora} \times 8760 \text{ horas} = \$1{,}051{,}200/\text{año}
+\end{equation}
+
+\section{La Métrica Reina: ``4 de Cada 10 Servidores''}
+
+El Reporte Nocturno de 12 Horas documentó la métrica central del Whitebook:
+eliminando el overhead de tokenización, un enjambre de 10 agentes puede procesar
+el mismo trabajo que 14 con el overhead, haciendo que 4 de cada 14 servidores
+sean redundantes cuando se adopta PMTP.
+
+Formalizando:
+\begin{align}
+\text{Throughput}(\text{tokens}) &= N_{\text{GPUs}} \times R_{\text{inference}} \times (1 - \eta_{\text{overhead}}) \\
+\text{Throughput}(\text{PMTP}) &= N_{\text{GPUs}} \times R_{\text{inference}}
+\end{align}
+
+donde $\eta_{\text{overhead}} \approx 0.286$ (overhead de tokenización como fracción
+del tiempo total de inferencia en el caso típico de 4 agentes). Por tanto:
+
+\begin{equation}
+\frac{N_{\text{GPUs}}(\text{PMTP})}{N_{\text{GPUs}}(\text{tokens})} = 1 - \eta_{\text{overhead}} \approx 0.714 \approx \frac{10}{14}
+\end{equation}
+
+\section{Impacto para Laboratorios con Escasez de Hardware (China)}
+
+El Reporte Nocturno identificó la implicación geopolítica más significativa:
+los laboratorios chinos (Qwen/Alibaba, DeepSeek) operan bajo restricciones
+de exportación de chips H100/A100 impuestas por EE.UU. (Controles de Exportación
+de Octubre 2022 y Octubre 2023).
+
+Para un laboratorio con capacidad fija de 1000 GPUs:
+\begin{itemize}
+\item Con tokenización: puede entrenar/inferir modelos de tamaño $C$.
+\item Con PMTP: puede entrenar/inferir modelos de tamaño $C \times 1.4$.
+\end{itemize}
+
+Este multiplicador es equivalente a recibir 400 GPUs adicionales sin comprarlas ---
+el equivalente a $\approx \$100$ millones de inversión en hardware al precio de mercado.
+
+La adopción de PMTP por un laboratorio con escasez de hardware no es una mejora
+de eficiencia: es una \textbf{ventaja competitiva estructural}.

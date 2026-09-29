@@ -1,0 +1,91 @@
+% ============================================================================
+% APÉNDICE A: CÓDIGO FUENTE CERTIFICADO EN SILICIO
+% ============================================================================
+\chapter{Código Fuente Certificado — POLYDIM V762/V764}
+
+
+\section*{Nota sobre los Apéndices de Código}
+
+El código fuente completo de la suite POLYDIM está disponible en:
+\begin{itemize}
+\item \textbf{Repositorio:} \url{https://github.com/AGT1973/POLYDIM_CLA_V7}
+\item \textbf{Commit V762 certificado:} \texttt{f9fa786}
+\item \textbf{Directorio local V762:} \texttt{E:\textbackslash POLYDIM\_EINSOF\textbackslash ENTREGA\_2026\_09\_19\_V762\textbackslash}
+\item \textbf{Directorio local V764:} \texttt{E:\textbackslash POLYDIM\_EINSOF\textbackslash EPOLYDIM\_EINSOFENTREGA\_2026\_09\_20\_V764\textbackslash}
+\end{itemize}
+
+Los archivos de código fuente referenciados en esta tesis son:
+\begin{tabular}{llll}
+\hline
+\textbf{Archivo} & \textbf{Versión} & \textbf{Descripción} \\
+\hline
+\texttt{kernel\_cpp\_v762.cpp} & V762 & Kernel C++20: Rodrigues, PMTP, Cayley-SMW \\
+\texttt{kernel\_rust\_v762.rs} & V762 & Guardián Rust: Higham bound, Betti-1 DSU \\
+\texttt{polydim\_v762\_monolito.py} & V762 & Orquestador Python con HardwareProbe \\
+\texttt{polydim\_triton\_kernel\_v762.py} & V762 & Kernel Triton GPU FP64 \\
+\texttt{test\_v762\_mpeleides.py} & V762 & Suite de 5 pruebas adversariales \\
+\texttt{kernel\_cpp\_v764.cpp} & V764 & Kernel endurecido con 12 hallazgos A1--A12 \\
+\texttt{kernel\_rust\_v764.rs} & V764 & Guardián Rust con tolerancias recalibradas \\
+\texttt{polydim\_ffi\_v764.dart} & V764 & Dart FFI con medición real y liberación de memoria \\
+\texttt{DOCUMENTO\_TESIS\_POLYDIM\_v764.md} & V764 & Documento fuente de esta tesis \\
+\hline
+
+
+\end{tabular}
+
+\section{Fragmento: Neumaier Merge (V764)}
+
+
+V764 introduce el método \texttt{merge} en el acumulador de Neumaier, que permite combinar
+acumuladores de distintos hilos OpenMP de forma compensada:
+
+\begin{verbatim}
+struct Neumaier {
+    double sum = 0.0;
+    double c   = 0.0;
+    inline void add(double v) {
+        const double t = sum + v;
+        if (std::abs(sum) >= std::abs(v)) c += (sum - t) + v;
+        else                              c += (v   - t) + sum;
+        sum = t;
+    }
+    // V764: merge dos acumuladores de forma compensada
+    // Crítico: add(o.sum) + add(o.c) es más correcto que 
+    // sum += o.sum; c += o.c (el último introduce un redondeo extra)
+    inline void merge(const Neumaier& o) { add(o.sum); add(o.c); }
+    inline double total() const { return sum + c; }
+};
+\end{verbatim}
+
+\section{Fragmento: polydim\_orthonormalize\_pair\_f64 (V764)}
+
+
+Función nueva en V764 que implementa Gram-Schmidt modificado de dos pasadas:
+
+\begin{verbatim}
+/* Dos pasadas de Gram-Schmidt modificado: una sola pasada deja un residuo
+ * O(kappa*eps) que puede exceder la cota de 64*eps. */
+for (int pass = 0; pass < 2; ++pass) {
+    const double d = polydim_cdot(u, v, D, nt); // producto escalar compensado
+    #pragma omp parallel for num_threads(nt) schedule(static)
+    for (int64_t i = 0; i < static_cast<int64_t>(D); ++i)
+        v[i] -= d * u[i];
+}
+\end{verbatim}
+
+\section{Fragmento: polydim\_selftest\_compensation (V764)}
+
+
+\begin{verbatim}
+extern "C" POLYDIM_EXPORT int32_t POLYDIM_CALL polydim_selftest_compensation(void) {
+    /* Si el compilador reasoció (a+b)+c == a+(b+c), la sustracción (s-t)
+     * en Neumaier se vuelve algebraicamente cero y el compilador la elimina. */
+    const double big = 1e15, small = 1.0;
+    Neumaier acc;
+    acc.add(big); acc.add(-big); acc.add(small);
+    /* Con reasociación: acc.total() puede ser 0 en lugar de 1.0 */
+    if (std::abs(acc.total() - small) > 0.5 * std::numeric_limits<double>::epsilon())
+        return POLYDIM_ERR_COMPENSATION_BROKEN;
+    return POLYDIM_SUCCESS;
+}
+\end{verbatim}

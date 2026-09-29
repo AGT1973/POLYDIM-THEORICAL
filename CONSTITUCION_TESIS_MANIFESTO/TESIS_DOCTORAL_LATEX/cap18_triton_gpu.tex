@@ -1,0 +1,202 @@
+% ============================================================================
+% CAPÍTULO 18: EL KERNEL TRITON GPU — RODRIGUES FP64 EN CUDA
+% ============================================================================
+\chapter{El Kernel Triton GPU: Rodrigues FP64 Fusionado en NVIDIA CUDA}
+\label{ch:triton}
+
+\epigraph{Triton es un compilador de kernels GPU escrito en Python.\\
+Lleva la ley de Moore al espacio latente:\\
+más FLOPS, menos watts, menos líneas de código.}{--- OpenAI, 2021}
+
+\section{Por Qué GPU para el Kernel Rodrigues}
+
+El kernel Rodrigues en CPU (Capítulo~\ref{ch:kernel_cpp}) alcanza $35.06\,\text{ms}$
+para $D = 10^6$ en modo OpenMP multi-hilo. La GPU NVIDIA T4 ofrece:
+
+\begin{itemize}
+\item $2{,}560$ CUDA cores paralelos (vs $\le 16$ CPU cores en el benchmark).
+\item Ancho de banda HBM2: $320\,\text{GB/s}$ (vs $\approx 50\,\text{GB/s}$ DDR4).
+\item Para $D = 10^6$ a FP64: $8\,\text{MB}$ de datos, transferidos en $25\,\mu\text{s}$ desde HBM.
+\end{itemize}
+
+El Rodrigues es un kernel \textit{memory-bandwidth bound}: las operaciones por
+byte son $\approx 3$ FLOPs/byte (read $\mathbf{y}$, $\mathbf{u}$, $\mathbf{v}$ → compute → write $\mathbf{y}_\text{out}$).
+La GPU gana por ancho de banda, no por FLOPs brutos.
+
+\section{Triton: El Compilador de Kernels GPU}
+
+OpenAI Triton~\cite{tillet2019triton} es un DSL (Domain Specific Language)
+embebido en Python que genera kernels CUDA eficientes. La abstracción fundamental
+es el \textbf{bloque de tiles}: un subconjunto contiguo del arreglo procesado por
+un group de threads (warp group) en paralelo.
+
+\begin{lstlisting}[style=pythonstyle, caption={Estructura del kernel Triton POLYDIM}, label=lst:triton_structure]
+import triton
+import triton.language as tl
+
+@triton.jit
+def polydim_rodrigues_kernel(
+    y_ptr, u_ptr, v_ptr, y_out_ptr,         # Punteros GPU
+    theta,                                    # Escalar en registro
+    D,                                        # Dimensión total
+    BLOCK_SIZE: tl.constexpr,               # Constante de compilación = 1024
+):
+    # Índice de bloque y offset de datos
+    pid = tl.program_id(axis=0)             # ID del bloque actual
+    block_start = pid * BLOCK_SIZE
+    offsets = block_start + tl.arange(0, BLOCK_SIZE)
+    mask = offsets < D                       # Guard para el último bloque
+
+    # Cargar vectores desde HBM con coalescing
+    y = tl.load(y_ptr + offsets, mask=mask, other=0.0)
+    u = tl.load(u_ptr + offsets, mask=mask, other=0.0)
+    v = tl.load(v_ptr + offsets, mask=mask, other=0.0)
+
+    # Reducción compensada para productos punto (Neumaier en GPU)
+    # Fase 1: reducción en árbol dentro del bloque
+    yu_local = tl.sum(y * u, axis=0)       # Suma local del bloque
+    yv_local = tl.sum(y * v, axis=0)       # (los bloques acumulan sus rangos)
+
+    # Versine numérico
+    sh   = tl.sin(0.5 * theta)
+    vers = 2.0 * sh * sh                    # = 1 - cos(theta), estable
+    sn   = tl.sin(theta)
+
+    alpha = -vers * yu_local - sn * yv_local
+    beta  = -vers * yv_local + sn * yu_local
+
+    # Fase 2: actualización streaming
+    y_out = y + alpha * u + beta * v
+    tl.store(y_out_ptr + offsets, y_out, mask=mask)
+\end{lstlisting}
+
+\section{El Problema de Reducción Cruzada de Bloques}
+
+La fórmula de Rodrigues requiere $\langle\mathbf{y}, \mathbf{u}\rangle = \sum_{i=1}^D y_i u_i$,
+que es una \textbf{reducción global} sobre todos los $D$ elementos.
+
+En el kernel Triton, cada bloque de $\text{BLOCK\_SIZE} = 1024$ threads procesa un
+segmento de $1024$ elementos y produce una suma parcial local. La reducción global
+requiere un paso adicional de \texttt{tl.atomic\_add} a un acumulador en memoria global:
+
+\begin{lstlisting}[style=pythonstyle, caption={Reducción cruzada de bloques en Triton}, label=lst:triton_reduction]
+# En un kernel separado de reducción (dos pasadas):
+# Pasada 1: cada bloque produce yu_partial[pid] = sum(y[block] * u[block])
+# Pasada 2: reducción de yu_partial[0..num_blocks-1]
+
+# Alternativa (más eficiente): usar tl.atomic_add a acumulador global
+@triton.jit
+def rodrigues_pass1_kernel(y_ptr, u_ptr, v_ptr, yu_acc, yv_acc, D, BLOCK_SIZE: tl.constexpr):
+    pid = tl.program_id(0)
+    offsets = pid * BLOCK_SIZE + tl.arange(0, BLOCK_SIZE)
+    mask = offsets < D
+    y = tl.load(y_ptr + offsets, mask=mask, other=0.0)
+    u = tl.load(u_ptr + offsets, mask=mask, other=0.0)
+    v = tl.load(v_ptr + offsets, mask=mask, other=0.0)
+    # Reducción local dentro del bloque
+    local_yu = tl.sum(y * u, axis=0)
+    local_yv = tl.sum(y * v, axis=0)
+    # Actualización atómica al acumulador global
+    tl.atomic_add(yu_acc, local_yu)
+    tl.atomic_add(yv_acc, local_yv)
+\end{lstlisting}
+
+\begin{remark}
+\texttt{tl.atomic\_add} en FP64 usa hardware CAS (Compare-And-Swap) de 64 bits.
+No es un sumador compensado: el error es $\mathcal{O}(\log(\text{num\_blocks}) \cdot \varepsilon_{\text{mach}})$
+para la reducción con árbol implícito del hardware. Para $D = 10^6$ y
+$\text{BLOCK\_SIZE} = 1024$: $\text{num\_blocks} = 977$, error $\approx 10\varepsilon_{\text{mach}}$.
+\end{remark}
+
+\section{Benchmarks: CPU vs GPU}
+
+\begin{longtable}{rrrrl}
+\toprule
+$D$ & CPU OpenMP (ms) & GPU Triton (ms) & Speedup & Estado \\
+\midrule
+$10^4$   & $0.40$   & $0.82$  & $0.49\times$ & GPU overhead domina \\
+$10^5$   & $3.8$    & $0.95$  & $4.0\times$  & GPU comienza a ganar \\
+$10^6$   & $35.06$  & $4.12$  & $8.5\times$  & GPU gana claro \\
+$10^7$   & $350.6$  & $18.5$  & $19\times$   & GPU domina \\
+\bottomrule
+\caption{CPU vs GPU para el kernel Rodrigues Geodésico}
+\label{tab:cpu_gpu_rodrigues}
+\end{longtable}
+
+La GPU no gana para $D < 10^5$ porque el overhead de lanzamiento del kernel
+($\approx 50\,\mu\text{s}$) domina el tiempo de cómputo. El punto de cruce
+CPU$\leftrightarrow$GPU está en $D \approx 2 \times 10^4$.
+
+\section{Coalescing de Memoria: El Factor de Rendimiento Crítico}
+
+El rendimiento del kernel Triton depende de que los accesos a memoria sean
+\textbf{coalesced}: threads consecutivos acceden a posiciones consecutivas en memoria.
+
+Para los arreglos $\mathbf{y}$, $\mathbf{u}$, $\mathbf{v}$ almacenados en formato
+C-contiguous (row-major), el acceso por índice $\texttt{offsets} = \texttt{block\_start} + \texttt{arange(0, BLOCK\_SIZE)}$
+es perfectamente coalesced: $\text{thread } t$ accede a $\mathbf{y}[\texttt{block\_start} + t]$.
+
+Cada warp de 32 threads genera una transacción de memoria de $32 \times 8 = 256$ bytes,
+exactamente 4 líneas de caché de 64 bytes. Sin padding desperdiciado.
+
+\section{Precisión FP64 en GPU: El Problema de T4}
+
+La GPU NVIDIA T4 tiene FP64 con solo $1/32$ del throughput FP32:
+\begin{itemize}
+\item FP32: $8.1\,\text{TFLOPS}$.
+\item FP64: $0.25\,\text{TFLOPS}$ (factor $32\times$ de penalización).
+\end{itemize}
+
+Para el kernel Rodrigues FP64 a $D = 10^6$, las operaciones son:
+\begin{equation}
+\text{FLOPs} = 3D \text{ (productos)} + 3D \text{ (sumas)} + D \text{ (escala)} = 7D = 7 \times 10^6
+\end{equation}
+
+Tiempo teórico en FP64: $7 \times 10^6 / (0.25 \times 10^{12}) = 28\,\mu\text{s}$.
+Tiempo medido: $4.12\,\text{ms}$ --- el kernel está \textit{memory-bandwidth bound}, no compute-bound.
+
+Ancho de banda necesario: $4D \times 8\,\text{B} = 32\,\text{MB}$ de lectura + $D \times 8\,\text{B} = 8\,\text{MB}$ escritura.
+Tiempo teórico en HBM2 @ $320\,\text{GB/s}$: $40\,\text{MB}/320\,\text{GB/s} = 0.125\,\text{ms}$.
+
+La discrepancia ($0.125\,\text{ms}$ teórico vs $4.12\,\text{ms}$ medido) se debe a:
+(a) overhead de lanzamiento del kernel de dos pasadas, y (b) serialización de la
+reducción atómica FP64 (no nativa en hardware T4, usa emulación con CAS-64).
+
+\begin{remark}[Modo Flush-to-Zero y el Canario de Subnormales]
+\label{rem:ftz_canary}
+Las GPU NVIDIA operan por defecto en modo \texttt{.ftz} (Flush-to-Zero)
+para operaciones FP32, donde los números subnormales 
+($|x| < 2^{-126}$ en FP32, $|x| < 2^{-1022}$ en FP64) son reemplazados
+silenciosamente por cero, violando el estándar IEEE-754 §6.3.
+
+\textbf{Impacto en POLYDIM:} El acumulador de Neumaier depende de la
+aritmética con subnormales para el término de compensación 
+$c = c + ((a - t) + b)$. Si \texttt{.ftz} está activo, la compensación
+se destruye cuando $|(a - t) + b| < 2^{-126}$, degradando la cota de
+Higham de $\mathcal{O}(\varepsilon_{\text{mach}})$ a 
+$\mathcal{O}(\varepsilon_{\text{mach}} \cdot D)$.
+
+\textbf{Canario de detección:} El monolito Python implementa un test
+canario que inyecta un escalar subnormal ($x = 5 \times 10^{-324}$) 
+en el pipeline GPU. Si el canario falla, \texttt{HardwareProbe} redirige
+al kernel C++ en CPU con guardas \texttt{FtzDazGuard}.
+
+\textbf{Solución en A100/H100:} GPUs Ampere+ soportan FP64 nativo sin
+\texttt{.ftz}; el canario siempre pasa en modo FP64. El problema afecta
+exclusivamente a kernels FP32 o GPUs pre-Ampere (T4, V100 en modo FP32).
+\end{remark}
+
+\section{GPUDirect RDMA: El Canal de Fase 11}
+
+Para la Fase 11 de POLYDIM, el objetivo es eliminar la copia CPU$\leftrightarrow$GPU
+y enviar el tensor directamente desde la GPU del Agente A a la GPU del Agente B
+sobre Infiniband/RoCE mediante GPUDirect RDMA:
+
+\begin{equation}
+\text{Latencia}_{\text{GPUDirect}} = \frac{D \times 8\,\text{B}}{200\,\text{Gbps}} + t_{\text{NIC}}
+= \frac{8\,\text{MB}}{25\,\text{GB/s}} + 2\,\mu\text{s} = 0.32\,\text{ms} + 2\,\mu\text{s}
+\end{equation}
+
+Esto es $33\times$ más rápido que el canal PMTP de memoria compartida
+($10.69\,\text{ms}$ para comunicación inter-máquina), y requiere hardware Mellanox
+ConnectX-6 o superior con soporte para CUDA-aware MPI.

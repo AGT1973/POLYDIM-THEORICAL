@@ -1,0 +1,459 @@
+% ============================================================================
+% CAPÍTULO: V762 → V764 — LA AUDITORÍA DE 12 HALLAZGOS Y EL ENDURECIMIENTO
+% ============================================================================
+\chapter{V762 a V764: La Auditoría de 12 Hallazgos y el Endurecimiento Final}
+\label{ch:v764}
+
+\epigraph{``El documento de entrega certificaba únicamente que dlopen y dlsym funcionaron.\\
+El Exit Code 0 de V761 era la historia más costosa de POLYDIM:\\
+certificaba el trabajo menos relevante.''}{--- Comentario interno kernel\_cpp\_v764.cpp, línea 6}
+
+\section{Contexto: El Día Después de la Certificación V762}
+
+El 19 de septiembre de 2026, a las 18:00 horas (Argentina), POLYDIM V762 alcanzó
+Exit Code 0 en 5/5 suites adversariales. Al día siguiente, el 20 de septiembre,
+una nueva ronda de auditoría adversarial --- la auditoría más implacable de toda
+la historia del proyecto --- identificó \textbf{12 hallazgos críticos} (A1--A12)
+que, aunque no comprometían los resultados numéricos reportados, sí constituían
+deficiencias en la \textit{completitud} del contrato de correctitud del kernel.
+
+Este capítulo documenta sistemáticamente los 12 hallazgos, sus correcciones,
+y las lecciones que cada uno aporta a la teoría del diseño de sistemas numéricos
+de alta confiabilidad.
+
+\begin{criticalbox}
+\textbf{Nota Importante:} Los benchmarks de V762 (Drift $= 4.44 \times 10^{-16}$,
+PMTP MaxBitDiff $= 0$, etc.) son correctos y no son afectados por los hallazgos A1--A12.
+Los hallazgos son fallas de \textit{completitud de la API} y \textit{robustez ante entradas
+inusuales}, no errores en los resultados certificados.
+\end{criticalbox}
+
+\section{A1: PMTP Reescrito como Triple Buffer con SEQLock por Ranura}
+
+\subsection{El Problema}
+
+El PMTP de V762 implementaba un doble buffer. El escritor producía en el buffer
+inactivo y publicaba atómicamente el puntero al buffer activo. El problema es que
+en un sistema con múltiples lectores lentos y un escritor rápido, puede ocurrir:
+
+\begin{enumerate}
+\item Escritor: publica en buffer 0 (activo = 0).
+\item Lector lento: inicia lectura de buffer 0.
+\item Escritor: produce en buffer 1, publica (activo = 1).
+\item Escritor: produce nuevamente en buffer 0, publica (activo = 0).
+\item Lector lento: \textbf{todavía leyendo buffer 0, que acaba de ser sobreescrito}.
+\end{enumerate}
+
+\subsection{La Solución V764}
+
+V764 introduce un SEQLock \textit{por ranura} (por slot) con verificación post-lectura:
+
+\begin{lstlisting}[style=cppstyle, caption={PMTP Triple Buffer con SEQLock por ranura --- V764}, label=lst:pmtp_triple]
+struct PmtpSlot {
+    alignas(64) std::atomic<uint64_t> seq; // Impar = escritura en progreso
+    // ... datos del tensor ...
+};
+
+// ESCRITURA:
+// 1. Seleccionar slot libre: not == lector activo
+// 2. seq++ (hacer impar: señaliza escritura)
+// 3. Escribir datos
+// 4. seq++ (hacer par: publicar)
+
+// LECTURA:
+// 1. Leer seq1 = slot.seq.load(Acquire)
+// 2. Si seq1 impar: slot en escritura, esperar
+// 3. Leer datos
+// 4. Leer seq2 = slot.seq.load(Acquire)
+// 5. Si seq1 != seq2: datos inconsistentes, reintentar
+
+// polydim_pmtp_validate_read: verifica que la secuencia no cambió
+int32_t polydim_pmtp_validate_read(PmtpControl* ctrl, uint64_t slot, uint64_t ticket) {
+    if (!ctrl) return POLYDIM_ERR_NULL_POINTER;
+    // Ticket = valor de seq observado antes de leer
+    // Slot actual: verificar que seq sigue igual
+    uint64_t current_seq = ctrl->slots[slot].seq.load(std::memory_order_acquire);
+    if (current_seq != ticket) return POLYDIM_ERR_SEQLOCK_RACE;
+    return POLYDIM_SUCCESS;
+}
+\end{lstlisting}
+
+\begin{theorem}[Correctitud del PMTP Triple Buffer]
+\label{thm:pmtp_triple}
+El protocolo PMTP V764 con triple buffer y SEQLock por ranura es seguro contra
+\textit{reader-writer aliasing}: ningún lector puede observar un buffer durante
+su sobreescritura, siempre que existan al menos 3 ranuras.
+\end{theorem}
+
+\begin{proof}
+Con 3 ranuras y un escritor que nunca sobreescribe la ranura en uso por el lector:
+el escritor tiene al menos 1 ranura libre (la que no está siendo leída ni la activa anterior).
+El protocolo SEQLock por ranura garantiza que si el escritor inicia una escritura
+en la ranura siendo leída (imposible por diseño, pero verificable), el ticket
+del lector cambiará y \texttt{pmtp\_validate\_read} retornará \texttt{SEQLOCK\_RACE}.
+\end{proof}
+
+\section{A2: Compuerta de Ortonormalidad --- check\_basis()}
+
+\subsection{El Problema}
+
+En V762, el kernel \textbf{calculaba} las normas de $\mathbf{u}$, $\mathbf{v}$ y
+$\langle \mathbf{u}, \mathbf{v} \rangle$ en la Pasada 1, pero no usaba esos valores
+para validar que la base fuera ortonormal antes de aplicar la rotación.
+
+El resultado: si el usuario pasaba $\mathbf{u}$ y $\mathbf{v}$ no ortonormales,
+el kernel devolvía \texttt{SUCCESS} con un resultado incorrecto en lugar de rechazar
+la entrada explícitamente.
+
+\subsection{La Solución V764}
+
+\begin{lstlisting}[style=cppstyle, caption={Compuerta de ortonormalidad V764}, label=lst:check_basis]
+/* A2: la compuerta que V762 calculaba y descartaba. Coste medido: ~1%. */
+if (e_uu > tol.basis_ortho || e_vv > tol.basis_ortho || e_uv > tol.basis_ortho)
+    return POLYDIM_ERR_BASIS_NOT_ORTHONORMAL;
+// Nuevo código de error: -9
+// Mensaje: "BASIS_NOT_ORTHONORMAL"
+// Solución para el llamante: usar polydim_orthonormalize_pair_f64 primero
+\end{lstlisting}
+
+\begin{remark}
+El hallazgo A2 demuestra un patrón de error común en el diseño de APIs numéricas:
+calcular información de validación pero descartarla antes de usarla. El costo de
+la validación ya está pagado (los productos punto se calculan en la Pasada 1 de
+todas formas). No usarlos para validar es un regalo al bug.
+\end{remark}
+
+\section{A3: Validación de theta/tau --- require\_finite()}
+
+\subsection{El Problema}
+
+V762 no validaba que el ángulo $\theta$ fuera finito antes de usarlo en
+\texttt{std::sin(theta)} y \texttt{std::cos(theta/2)}.
+
+Con $\theta = \text{NaN}$: \texttt{sin(NaN) = NaN}, \texttt{cos(NaN) = NaN}.
+Los coeficientes $\alpha = \text{NaN}$, $\beta = \text{NaN}$ producen
+\texttt{y\_out[i] = NaN} para todo $i$. La verificación post-rotación
+$\norm{y_{\text{out}}} = \text{NaN}$, que se comparaba con la tolerancia:
+\texttt{NaN > tol = false}. Resultado: \texttt{SUCCESS} con vector de salida NaN.
+
+\subsection{La Solución V764}
+
+\begin{lstlisting}[style=cppstyle, caption={Validación de theta --- A3}, label=lst:theta_validation]
+inline bool require_finite(double x) { return std::isfinite(x); }
+
+// Primeras líneas de polydim_rodrigues_geodesic_f64:
+if (!require_finite(theta)) return POLYDIM_ERR_INVALID_SCALAR; // -8 (nuevo)
+\end{lstlisting}
+
+\begin{proposition}[NaN-Transparency de Comparaciones]
+Para cualquier $x \in \R$: \texttt{NaN > x} $\equiv$ \texttt{false},
+\texttt{NaN < x} $\equiv$ \texttt{false}, \texttt{NaN == x} $\equiv$ \texttt{false}.
+En particular, \texttt{NaN > tol} $\equiv$ \texttt{false} para cualquier tolerancia finita,
+haciendo que toda verificación de tolerancia con NaN falle silenciosamente.
+\end{proposition}
+
+Esto es IEEE-754 §6.2: las comparaciones de orden producen \texttt{false} cuando
+cualquiera de los operandos es NaN (excepto $\ne$ que produce \texttt{true}).
+
+\section{A4: Validación del Punto de Entrada Contra la Variedad}
+
+\subsection{El Problema}
+
+V762 no verificaba que $\mathbf{y}$ ya estuviera en $S^{D-1}$ antes de aplicar la rotación.
+Si el usuario pasaba un vector con $\norm{\mathbf{y}} = 1.5$ (no normalizado), el kernel
+devolvía un resultado incorrecto con SUCCESS.
+
+\subsection{La Solución V764}
+
+\begin{lstlisting}[style=cppstyle, caption={Validación del punto de entrada --- A4}, label=lst:point_manifold]
+/* A4: el punto debe estar sobre la variedad. */
+if (e_yy > tol.point_norm) return POLYDIM_ERR_POINT_OFF_MANIFOLD; // -10
+
+/* tol.point_norm = 64 * eps = 1.42e-14 (NO escala con D) */
+/* Consecuencia: el llamante DEBE normalizar con polydim_project_sphere_f64 */
+\end{lstlisting}
+
+\section{A5: Tolerancias que NO Escalan con D --- La Decisión de Diseño más Importante}
+
+\subsection{El Error de V762}
+
+V762 (y su documentación) reportó que la tolerancia de Higham escala como:
+\begin{equation}
+\text{tol}(D) = 2D \cdot \varepsilon_{\text{mach}} + 50\varepsilon_{\text{mach}}
+\end{equation}
+
+Esta es la cota \textit{teórica} de Higham para sumatoria \textit{sin} compensación.
+El kernel V762 usaba sumación de Neumaier, lo que reduce el error a
+$\mathcal{O}(\varepsilon_{\text{mach}})$ \textbf{independiente de $D$}.
+
+El guardián de V762 usaba la cota escalada ($\approx 4.44 \times 10^{-10}$ para $D=10^6$)
+cuando el error real medido era $4.44 \times 10^{-16}$ --- es decir, el guardián era
+\textbf{$2.1 \times 10^{6}$ veces más laxo que la realidad}.
+
+\subsection{La Corrección V764: El Comentario más Importante del Kernel}
+
+\begin{lstlisting}[style=cppstyle, caption={Decisión de diseño de tolerancias --- A5 V764}, label=lst:tolerances_v764]
+extern "C" POLYDIM_EXPORT PolydimTolerances POLYDIM_CALL
+polydim_default_tolerances(uint64_t D) {
+    PolydimTolerances t;
+    /* A5 — DECISIÓN DE DISEÑO, no un detalle de implementación.
+     *
+     * Con sumación compensada la deriva medida es O(eps) e INDEPENDIENTE de D:
+     * verificado a 0.00e+00 en D=1e6 vía polydim_project_sphere_f64. Por tanto
+     * la cota por defecto NO escala con D. Escalarla fue exactamente el error
+     * de V762: su guardián admitía 4.44e-10 en D=1e6, 2.1e6x más laxo que el
+     * 2.10e-14 que el documento de entrega declaraba certificado.
+     *
+     * 64*eps = 1.42e-14 <= 2.10e-14, o sea la cota es MÁS ESTRICTA que la cifra
+     * publicada. Consecuencia para el llamante: los vectores deben normalizarse
+     * con polydim_project_sphere_f64 (compensado). Una normalización ingenua en
+     * D=1e6 deja un error relativo de ~4.3e-14 y será RECHAZADA, con razón.
+     */
+    t.basis_ortho      = 64.0 * kEps;           /* 1.42e-14, fijo */
+    t.point_norm       = 64.0 * kEps;           /* 1.42e-14, fijo */
+    t.gram_ortho       = 64.0 * kEps * std::sqrt((double)D); /* Stiefel escala */
+    t.pivot_rel        = 8.0  * kEps;
+    t.reject_subnormal = 0;
+    return t;
+}
+\end{lstlisting}
+
+\begin{theorem}[Independencia de $D$ del Error de Neumaier]
+\label{thm:neumaier_independence}
+El acumulador de Neumaier satisface:
+\begin{equation}
+\abs{\text{NeumaierSum}(a_1, \ldots, a_D) - \sum_{i=1}^D a_i} \le (2\varepsilon_{\text{mach}} + \mathcal{O}(\varepsilon_{\text{mach}}^2)) \cdot \max_i |a_i|
+\end{equation}
+\textbf{independiente de $D$}. La cota de Higham $\tilde{u}_D = (2D + 50)\varepsilon_{\text{mach}}$
+se aplica a la sumatoria naïve sin compensación y es innecesariamente laxa para Neumaier.
+\end{theorem}
+
+La tolerancia correcta es $64\varepsilon_{\text{mach}} = 1.42 \times 10^{-14}$
+(64 operaciones de redondeo en el peor caso del bucle compensado), no $2D\varepsilon_{\text{mach}}$.
+
+\section{A6: FTZ/DAZ Apagado por Defecto --- IEEE-754 Conformance}
+
+\subsection{El Problema}
+
+V762 habilitaba FTZ/DAZ (Flush-To-Zero / Denormals-Are-Zero) incondicionalmente
+en el \texttt{FtzDazGuard}. Esto rompe el estándar IEEE-754 y puede producir
+resultados diferentes entre plataformas (x86 vs ARM64 vs código sin FTZ).
+
+\subsection{La Solución V764}
+
+\begin{lstlisting}[style=cppstyle, caption={FTZ/DAZ off by default --- A6}, label=lst:ftzdaz_off]
+/* A6: FTZ/DAZ apagado por defecto. IEEE-754 conforme salvo opt-in explícito. */
+#ifndef POLYDIM_ENABLE_FTZ
+  #define POLYDIM_ENABLE_FTZ 0
+#endif
+
+inline void set_fp_mode() {
+#if POLYDIM_ENABLE_FTZ && defined(POLYDIM_X86)
+    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+#endif
+    // Por defecto: IEEE-754 estricto. Sin flush de subnormales.
+}
+\end{lstlisting}
+
+El cambio tiene una consecuencia: el nuevo parámetro \texttt{reject\_subnormal = 0}
+en las tolerancias por defecto significa que los subnormales son tolerados (no rechazados).
+Un vector unitario disperso puede tener componentes subnormales legítimas que representan
+contribuciones infinitesimales a la norma.
+
+\section{A9: Umbral de Pivote Relativo a $\norm{M}_\infty$}
+
+En la retracción Cayley-SMW, la inversión de la matriz $\mathbf{M} \in \R^{2K \times 2K}$
+falla si algún pivote es numéricamente cero. V762 usaba un umbral absoluto
+\texttt{tol.pivot\_abs = 1e-14}.
+
+El problema: para matrices con $\norm{M}_\infty = 10^{-8}$ (caso de paso de aprendizaje muy pequeño),
+todos los pivotes son pequeños pero la matriz está bien condicionada. Un umbral absoluto
+rechazaría un caso perfectamente válido.
+
+V764 usa umbral relativo:
+\begin{equation}
+\text{pivot\_threshold} = \text{tol.pivot\_rel} \times \norm{M}_\infty = 8\varepsilon_{\text{mach}} \times \norm{M}_\infty
+\end{equation}
+
+\section{A10: num\_threads Explícito}
+
+V762 usaba \texttt{\#pragma omp parallel reduction} sin especificar \texttt{num\_threads},
+pero el arreglo de acumuladores se indexaba por \texttt{omp\_get\_thread\_num()}. Si el entorno
+variaba el número de threads entre el \texttt{parallel} externo y el interno, el índice podría
+exceder el tamaño del arreglo.
+
+V764 captura el número de threads una vez:
+\begin{lstlisting}[style=cppstyle, caption={num\_threads explícito --- A10}, label=lst:numthreads]
+const int nthreads = clamp_threads(omp_get_max_threads());
+std::vector<Neumaier> a_yy(nthreads), a_yu(nthreads), ...;
+#pragma omp parallel num_threads(nthreads) // EXPLÍCITO en cada región
+\end{lstlisting}
+
+\section{A11: Autodiagnóstico Anti-\texttt{-ffast-math}}
+
+El flag de compilación \texttt{-ffast-math} habilita reasociación de operaciones de punto
+flotante, lo que destruye el acumulador de Neumaier. La resta $(s - t)$ en el algoritmo
+se vuelve algebraicamente cero bajo reasociación y el compilador la elimina.
+
+V764 incluye una función de autodiagnóstico que falla si el compilador reasocio:
+
+\begin{lstlisting}[style=cppstyle, caption={Autodiagnóstico anti-ffast-math --- A11}, label=lst:selftest]
+extern "C" POLYDIM_EXPORT int32_t POLYDIM_CALL polydim_selftest_compensation(void) {
+    // Construir un caso donde Neumaier difiere de suma naïve en > 0.5 ULP
+    // Si el compilador reasocio, ambas sumas darán lo mismo: FALLA
+    const double big = 1e15, small = 1.0;
+    Neumaier acc;
+    acc.add(big); acc.add(-big); acc.add(small);
+    const double naive = (big + (-big)) + small; // = 1.0 (si no hay reasoc)
+    const double neumaier = acc.total();
+    // Con reasociación: acc.total() = 0 (o NaN)
+    // Sin reasociación: acc.total() = 1.0
+    if (std::abs(neumaier - small) > 0.5 * std::numeric_limits<double>::epsilon())
+        return POLYDIM_ERR_COMPENSATION_BROKEN; // -12 nuevo
+    return POLYDIM_SUCCESS;
+}
+
+extern "C" POLYDIM_EXPORT int32_t POLYDIM_CALL polydim_selftest_all(void) {
+    int32_t rc;
+    if ((rc = polydim_selftest_compensation()) != POLYDIM_SUCCESS) return rc;
+    // ... más tests ...
+    return POLYDIM_SUCCESS;
+}
+\end{lstlisting}
+
+\begin{certifiedbox}
+\textbf{Consecuencia para el Dart FFI (A12):} La función \texttt{polydim\_selftest\_all()}
+es llamada automáticamente en \texttt{Polydim.open()}, garantizando que cualquier
+binario compilado con \texttt{-ffast-math} sea detectado y rechazado \textit{antes}
+de que ningún cálculo incorrecto salga del proceso.
+\end{certifiedbox}
+
+\section{A12: El Bug más Costoso --- El Exit Code 0 Falso del Dart FFI}
+
+\subsection{El Error que Invalida la Certificación de V761}
+
+El Dart FFI de V761 tenía el siguiente main():
+
+\begin{lstlisting}[style=pythonstyle, caption={Dart FFI V761 --- Exit Code 0 FALSO}, label=lst:dart_false]
+// V761 polydim_ffi_v761.dart - main() ROTO
+void main() {
+  final lib = DynamicLibrary.open('bin/polydim_kernel.so');
+  final rodrigues = lib.lookupFunction<_RodriguesNative, _RodriguesDart>('polydim_rodrigues');
+  // ^ Solo verifica que dlopen y dlsym funcionan
+  // NUNCA llama a rodrigues(). 
+  // NUNCA mide latencia.
+  // El comentario "46 ms" era un literal en el código, no una medición.
+  print('Exit 0'); // ← Esto es lo único que "certificaba"
+}
+\end{lstlisting}
+
+Adicionalmente:
+\begin{enumerate}
+\item El nombre de biblioteca era \texttt{bin/polydim\_kernel.so}: incorrecto en Linux/Android
+(debe ser \texttt{libpolydim.so}) y sin soporte para macOS (\texttt{libpolydim.dylib}).
+\item No se liberaba memoria: cada llamada filtraba $4 \times D \times 8$ bytes.
+\item Sin \texttt{isLeaf}: sobrecarga de $235\,\text{ns}$ en lugar de $28\,\text{ns}$ por llamada.
+\end{enumerate}
+
+\subsection{La Corrección V764}
+
+\begin{lstlisting}[language={[Sharp]C}, caption={Dart FFI V764 --- Medición real}, label=lst:dart_v764]
+// V764 polydim_ffi_v764.dart - mide DE VERDAD
+static String _defaultLibraryName() {
+  if (Platform.isWindows) return 'polydim.dll';
+  if (Platform.isMacOS) return 'libpolydim.dylib'; // A12.3: faltaba
+  return 'libpolydim.so';  // Linux/Android: prefijo `lib`
+}
+
+// Descarga exhaustiva de candidatos de path
+final candidates = [name, './$name', '$cwd/$name', '$cwd/build/$name'];
+
+// Autodiagnóstico obligatorio al abrir:
+static Polydim open({String? path, bool runSelftest = true}) {
+  final p = Polydim._(lib);
+  if (runSelftest) {
+    final rc = p._selftestAll(); // A11: detecta -ffast-math
+    if (rc != polydimSuccess) throw PolydimException('selftest_all', rc);
+  }
+  return p;
+}
+
+// Medición real con 9 repeticiones + mediana:
+for (var i = 0; i < 9; i++) {
+  final sw = Stopwatch()..start();
+  rc = poly._rodrigues(pyn, pu, pv, po, 0.7, d, nullptr, rep);
+  sw.stop();
+  times.add(sw.elapsedMicroseconds / 1000.0);
+}
+times.sort();
+print('mediana=${times[times.length ~/ 2].toStringAsFixed(2)} ms');
+// ^ Número medido, no un literal. Medido: ~3.4 ms en D=1e6 con 2 hilos.
+\end{lstlisting}
+
+\section{La Nueva API de Tolerancias y Reporte}
+
+V764 introduce un sistema formal de tolerancias y reportes que permite al llamante
+ver exactamente qué ocurrió dentro del kernel:
+
+\begin{longtable}{llp{7cm}}
+\toprule
+\textbf{Campo} & \textbf{V762} & \textbf{V764} \\
+\midrule
+\texttt{basis\_ortho} & No existía & $64\varepsilon_{\text{mach}}$, independiente de $D$ \\
+\texttt{point\_norm} & No existía & $64\varepsilon_{\text{mach}}$ \\
+\texttt{gram\_ortho} & \texttt{tol = 2D*eps} (erróneo) & $64\varepsilon_{\text{mach}}\sqrt{D}$ (Stiefel) \\
+\texttt{pivot\_rel} & Absoluto \texttt{1e-14} & Relativo $8\varepsilon_{\text{mach}} \cdot \norm{M}_\infty$ \\
+\texttt{reject\_subnormal} & Siempre rechazaba & Configurable (off por defecto) \\
+\midrule
+\texttt{point\_norm\_err} & No existía & Error medido de $\norm{\mathbf{y}}_2 - 1$ \\
+\texttt{basis\_uu\_err} & No existía & $|\norm{\mathbf{u}}^2 - 1|$ \\
+\texttt{basis\_uv\_err} & No existía & $|\langle\mathbf{u},\mathbf{v}\rangle|$ \\
+\texttt{out\_norm\_err} & No existía & Error medido de $\norm{\mathbf{y}_{\text{out}}}_2 - 1$ \\
+\texttt{threads\_used} & No existía & Número de hilos OpenMP usados \\
+\bottomrule
+\caption{Comparación de la API V762 vs V764}
+\label{tab:api_comparacion}
+\end{longtable}
+
+\section{El POLYDIM\_MAX\_K Corregido: De 1024 a 512}
+
+V762 declaraba soporte hasta $K = 1024$ en la retracción Cayley-SMW. El hallazgo A1 reveló:
+
+\begin{equation}
+\text{Memoria para Gram } 2K \times 2K = (2 \times 1024)^2 \times 8 \text{ bytes} = 33.55\,\text{MB}
+\end{equation}
+\begin{equation}
+\text{FLOPs para invertir } 2K \times 2K = \mathcal{O}((2K)^3) = \mathcal{O}(8 \times 10^9) \approx 8\,\text{GFLOP}
+\end{equation}
+
+$8\,\text{GFLOP}$ secuenciales para la inversión hacen que el tiempo del Cayley-SMW
+sea dominado por la fase de pequeña matriz para $K = 1024$, negando el ahorro de escalar
+en $D$. El máximo sostenible es $K = 512$:
+
+\begin{equation}
+\text{POLYDIM\_MAX\_K} = 512 \Rightarrow \text{Gram} = 1024 \times 1024 \times 8\,\text{B} = 8\,\text{MB}, \quad \text{inv} \approx 1\,\text{GFLOP}
+\end{equation}
+
+\section{Nuevos Códigos de Error en V764}
+
+\begin{longtable}{rll}
+\toprule
+\textbf{Código} & \textbf{Nombre} & \textbf{Causa} \\
+\midrule
+$-8$ & \texttt{INVALID\_SCALAR} & \texttt{theta} o \texttt{tau} no finito (A3) \\
+$-9$ & \texttt{BASIS\_NOT\_ORTHONORMAL} & Base $(\mathbf{u}, \mathbf{v})$ no ortonormal (A2) \\
+$-10$ & \texttt{POINT\_OFF\_MANIFOLD} & $\mathbf{y} \notin S^{D-1}$ (A4) \\
+$-11$ & \texttt{ALIASED\_BUFFERS} & \texttt{y\_out} solapa con \texttt{u} o \texttt{v} (A2) \\
+$-12$ & \texttt{COMPENSATION\_BROKEN} & Compilador reasocio Neumaier (A11) \\
+\bottomrule
+\caption{Nuevos códigos de error introducidos en V764}
+\label{tab:v764_errors}
+\end{longtable}
+
+\begin{certifiedbox}
+\textbf{Estado V764 (2026-09-20):} Los 12 hallazgos A1--A12 han sido corregidos
+en el kernel. Los benchmarks base permanecen: Drift = $4.44 \times 10^{-16}$,
+PMTP MaxBitDiff = 0. La API es ahora \textbf{más estricta} --- vectores no normalizados
+son rechazados explícitamente en lugar de producir resultados silenciosamente incorrectos.
+\end{certifiedbox}

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>POLYDIM-CLA & PMTP Pitch Deck</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/night.min.css" id="theme">
+    <style>
+        .reveal h1, .reveal h2, .reveal h3 {
+            color: #00ffcc;
+            text-transform: none;
+            font-weight: 700;
+        }
+        .reveal p, .reveal li {
+            color: #e0e0e0;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        .highlight { color: #ff3366; font-weight: bold; }
+        .box {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ffcc;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .bg-img {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- SLIDE 1: Título -->
+            <section>
+                <h1>POLYDIM-CLA & PMTP</h1>
+                <h3>El Fin de la Era del Texto (El Gusano 1D)</h3>
+                <p>Telepatía Tensorial Nativa para Enjambres de Inteligencia Artificial.</p>
+            </section>
+
+            <!-- SLIDE 2: El Concepto Fundamental (Core Fix) -->
+            <section>
+                <h2>El Núcleo del Sistema</h2>
+                <div class="box">
+                    <p><strong style="font-size: 1.2em; color: #fff;">Un Agente IA NO le envía un archivo JSON o Markdown a otro Agente.</strong></p>
+                    <p>En el sistema tradicional, las IAs pierden el 90% del tiempo decodificando sus pensamientos matemáticos a palabras (JSON/Texto) para poder enviarlos. Esto destruye datos y quema energía.</p>
+                    <p class="highlight">En POLYDIM, el Agente A escribe su pensamiento (un Vector / Tensor Multidimensional) directamente en un bloque de la Memoria FÍSICA (RAM). El Agente B lee ese vector. Cero texto. Cero pérdida.</p>
+                </div>
+            </section>
+
+            <!-- SLIDE 3: ¿Qué es POLYDIM-CLA y PMTP? -->
+            <section>
+                <h2>POLYDIM-CLA y PMTP</h2>
+                <ul>
+                    <li><strong>POLYDIM-CLA:</strong> Es la Arquitectura Cognitiva Maestra. Define cómo las inteligencias se orquestan y razonan en altas dimensiones ($S^{D-1}$) sin colapsar a 1D.</li>
+                    <li><strong>PMTP (Polydim Tensor Message Protocol):</strong> Es el protocolo de red y memoria subyacente. Es el conducto físico que permite que esos vectores pasen de una GPU a otra (Memoria Compartida o Fibra Óptica).</li>
+                </ul>
+            </section>
+
+            <!-- SLIDE 4: Fases 1 a 3 -->
+            <section>
+                <h2>Fases 1, 2 y 3: Ingestión y Compresión</h2>
+                <ul>
+                    <li><strong>Fase 1 (Embedding):</strong> El prompt humano inicial se convierte en un Vector Continuo. Entramos al espacio de Alta Dimensión.</li>
+                    <li><strong>Fase 2 (Retracción Stiefel):</strong> El vector es forzado matemáticamente a mantener una estructura ortogonal perfecta. Esto evita que el pensamiento se degrade.</li>
+                    <li><strong>Fase 3 (TT-SVD):</strong> Compresión extrema. En lugar de manejar billones de parámetros, el tensor se descompone en "núcleos" pequeños manejables para poder viajar rápido.</li>
+                </ul>
+            </section>
+
+            <!-- SLIDE 5: Fases 4 a 8 -->
+            <section>
+                <h2>Fases 4 a 8: El Enjambre Latente</h2>
+                <ul>
+                    <li><strong>Fases 4 a 7 (Ruteo Nativo):</strong> Los agentes intercambian los vectores comprimidos entre ellos de forma iterativa. El consenso se logra en matemáticas puras, sin generar una sola palabra.</li>
+                    <li><strong>Fase 8 (El Nodo Holográfico):</strong> Si las IAs hablan en vectores, ¿cómo las entiende el humano? La Fase 8 toma el vector final consensuado y lo proyecta (lo colapsa) de nuevo a texto 2D (Español/Inglés) SOLO para que el usuario lo lea en su pantalla.</li>
+                </ul>
+            </section>
+
+            <!-- SLIDE 6: Fase 9 -->
+            <section>
+                <h2>Fase 9: Memoria Compartida Local (IPC)</h2>
+                <div class="box">
+                    <p><strong>El Hito Empírico:</strong> Dos modelos en la misma computadora.</p>
+                    <p>En lugar de mandarse datos por puertos internos de red, ambos modelos mapean el mismo pedazo de Memoria RAM (`Windows Shared Memory` / `mmap`).</p>
+                    <p>El procesador central (CPU) ni siquiera interviene. El ancho de banda sube exponencialmente.</p>
+                </div>
+            </section>
+
+            <!-- SLIDE 7: Fase 10 -->
+            <section>
+                <h2>Fase 10: El Salto a Internet (WAN)</h2>
+                <ul>
+                    <li>Mandarlo por internet significa perder paquetes. Si pierdes parte del vector, la idea llega corrupta.</li>
+                    <li><strong>La Solución (Isometría de Clifford-Hodge):</strong> Enviamos el vector como un sistema de "espejos matemáticos". Si la red hace que un paquete se pierda o rebote mal, el reflejo sigue siendo perfectamente simétrico.</li>
+                    <li>Garantiza un Drift Topológico de <span class="highlight">0.0</span> incluso si el internet es inestable.</li>
+                </ul>
+            </section>
+
+            <!-- SLIDE 8: Fase 11 -->
+            <section>
+                <h2>Fase 11: Hardware RDMA y RoCEv2</h2>
+                <ul>
+                    <li>¿Y si los agentes están en distintos continentes?</li>
+                    <li>Usamos <strong>GPUDirect RDMA</strong>. La tarjeta de red lee el vector directamente de la VRAM de la Tarjeta de Video (GPU).</li>
+                    <li>El vector viaja por los cables de fibra óptica globales y se inyecta directamente en la Tarjeta de Video del otro país.</li>
+                    <li><strong class="highlight">El Procesador (CPU) y la RAM del sistema operativo son eludidos por completo.</strong></li>
+                </ul>
+            </section>
+
+            <!-- SLIDE 9: Impacto Económico -->
+            <section>
+                <h2>El Multiplicador de Infraestructura</h2>
+                <div class="box">
+                    <h3>4 de cada 10 Servidores</h3>
+                    <p>Al erradicar el gasto computacional absurdo de generar miles de palabras JSON para que dos agentes hablen, <strong>ahorramos el 100% de ese cómputo (TFLOPS)</strong>.</p>
+                    <p>Empresas enteras pueden mantener la misma velocidad e inteligencia usando solo el 40% de sus servidores actuales, sin comprar ni un solo microchip nuevo. Simplemente usando POLYDIM-CLA.</p>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Reveal.js JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'fade',
+            center: true
+        });
+    </script>
+</body>
+</html>

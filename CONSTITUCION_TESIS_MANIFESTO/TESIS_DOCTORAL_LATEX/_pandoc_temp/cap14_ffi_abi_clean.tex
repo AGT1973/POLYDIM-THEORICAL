@@ -1,0 +1,250 @@
+\chapter{FFI Multi-Lenguaje: El Contrato ABI entre C++, Rust, Python y Dart}
+
+\section{El Problema de Interfaz de Funciones Foráneas (FFI)}
+El corazón algorítmico de POLYDIM distribuye su cognición entre C++ (operaciones masivas SIMD, Triton), Rust (verificación topológica Betti, PMTP Zero-Copy IPC), Python (Orquestador MAS) y Dart (UI y telemetría cliente). Cada lenguaje implementa su propio modelo de memoria, recolector de basura (GC) y convención de llamadas. Una infracción de los contratos de contigüidad en el borde FFI genera corrupciones de memoria irrecuperables (SIGSEGV), fugas, y discrepancias asintóticas difíciles de trazar.
+
+\section{La ABI de C++: \texttt{extern "C"} y la Convención de Llamadas}
+Para interoperabilidad binaria plana, se inhibe el "name mangling" (decoración de nombres) de C++ mediante \texttt{extern "C"}.
+Se definen macros de exportación:
+\begin{verbatim}
+#if defined(_MSC_VER)
+    #define POLYDIM_EXPORT __declspec(dllexport)
+    #define POLYDIM_CALL __cdecl
+#else
+    #define POLYDIM_EXPORT __attribute__((visibility("default")))
+    #define POLYDIM_CALL
+#endif
+\end{verbatim}
+El uso intensivo de la palabra clave \texttt{\_\_restrict\_\_} en la firma de las funciones informa al compilador C++ de la estricta no-aliasing, permitiendo una vectorización óptima. Para la estructura de control PMTP, se exige alineación a la línea de caché (\texttt{alignas(64)}), evitando la falsa compartición (false sharing) en SMP.
+
+\section{Python \texttt{ctypes}: Tipado Riguroso y Prevención de Bugs (P0-1)}
+El mecanismo de seguridad más crítico en el enlace Python-FFI es la declaración explícita de \texttt{argtypes} y \texttt{restype}. El bug "P0-1" demostró que omitir \texttt{argtypes} causa que Python pase direcciones de memoria de 64-bits truncadas implícitamente a 32-bits (c\_int), detonando segment faults inmediatos.
+
+Para arrays, se requiere \texttt{POINTER(c\_double)}. Las dimensiones deben emplear \texttt{c\_size\_t} (variable según arquitectura 32/64-bits) y jamás \texttt{c\_int64}.
+El objeto \texttt{PMTPPinGuard} en la capa Python verifica contigüidad en memoria (\texttt{C\_CONTIGUOUS}), alineación de \texttt{float64}, y retiene referencias explícitas al \texttt{numpy.ndarray} durante la ejecución nativa para evitar que el Garbage Collector lo elimine.
+
+\section{Guardia FFI de Rust: Evitando Panics Indefinidos}
+Cuando Rust entra en pánico ("panic") y el desenredo de la pila (unwinding) cruza el límite FFI de \texttt{extern "C"}, se produce un Comportamiento Indefinido (UB) total en C++.
+Rust impone la macro \texttt{\#[no\_mangle]} y exige que toda función exportada atrape panics internamente mediante \texttt{catch\_unwind}.
+
+\begin{verbatim}
+#[no_mangle]
+pub extern "C" fn polydim_betti_compute() -> i32 {
+    std::panic::catch_unwind(|| {
+        // ... lógica segura
+        0
+    }).unwrap_or(POLYDIM_ERR_PANIC_CAUGHT)
+}
+\end{verbatim}
+Donde \texttt{ErrPanicCaught = -99}. Si hay un error, el programa llamante (Python o Dart) recibe $-99$ en lugar de una explosión binaria inmanejable.
+
+\section{Dart FFI: Ciclos de Vida y Mapeo Estructural}
+El archivo \texttt{polydim\_ffi\_v764.dart} inicializa la biblioteca usando resolución fallback de \texttt{DynamicLibrary.open} para OS variados (\texttt{.dll}, \texttt{.so}, \texttt{.dylib}). (Fix A12).
+Las estructuras nativas de Dart espejan exactamente los campos de C usando subclases de \texttt{Struct} e inyecciones de metadatos de tamaño (\texttt{@Double()}, \texttt{@Int32()}, \texttt{@Uint64()}).
+
+Para la asignación de memoria:
+\begin{verbatim}
+final pointer = calloc<Double>(d);
+try {
+    // Uso del pointer
+} finally {
+    calloc.free(pointer); // MANDATORY calloc.free() (A12.4 fix)
+}
+\end{verbatim}
+
+\subsection{Marcadores de Eficiencia: \texttt{isLeaf}}
+Se debe indicar \texttt{isLeaf: true} en la búsqueda FFI \emph{únicamente} para funciones que no llaman de vuelta al hilo de Dart (callbacks) y son de ejecución breve, reduciendo drásticamente la latencia al saltar protecciones del motor GC.
+
+\section{Taxonomía de Errores Cruzada (12 Códigos Maestros)}
+Todo error propagado en el núcleo de POLYDIM fluye hacia las 4 entidades idiomáticas.
+
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Código C++ / Rust} & \textbf{Valor} & \textbf{Python Exception} & \textbf{Dart PolydimException} \\ \hline
+POLYDIM\_SUCCESS           & 0              & (Retorna Normal)          & (Retorna Normal)               \\
+POLYDIM\_ERR\_NAN          & -2             & ValueError("NaN val")     & NaNEncounteredException        \\
+POLYDIM\_ERR\_OOM          & -5             & MemoryError               & NativeMemoryException          \\
+POLYDIM\_ERR\_FRAGMENTED   & -6             & TopologyError             & TopologyFragmentedException    \\
+POLYDIM\_ERR\_PANIC\_CAUGHT& -99            & RuntimeError("Rust UB")   & RustPanicException             \\ \hline
+\end{tabular}
+
+La adherencia absoluta a este contrato garantiza que la validación asintótica no colapse ante peculiaridades semánticas del host.
+
+\section{Inmersión Profunda en Dart FFI: Evolución V761 a V764}
+
+La integración de POLYDIM con Dart representa el nexo terminal con la interfaz humana (UI). En la versión V761, un error metodológico crítico en las pruebas unitarias generó una falsa sensación de seguridad. El archivo principal contenía una función \texttt{main()} que retornaba Exit Code 0 inmediatamente, sin realizar llamadas reales a los kernels asintóticos como \texttt{rodrigues\_rotation}. Esta "mentira del Exit Code 0" enmascaró problemas profundos de resolución de símbolos en la carga de las librerías compartidas dinámica.
+
+En la arquitectura reformulada V764, el diseño FFI de Dart fue auditado y recodificado desde cero. El núcleo de esta integración se concentra en el método \texttt{Polydim.open()}, el cual inicializa la biblioteca implementando rutinas de autorreparación y diagnóstico explícito (selftest). 
+
+La carga de librerías utiliza una lista de candidatos predefinida iterando jerárquicamente: \texttt{./polydim\_kernel.dll}, \texttt{./libpolydim\_kernel.so}, entre otros, y mide exhaustivamente el tiempo real de vinculación y despacho de memoria.
+
+\begin{verbatim}
+import 'dart:ffi';
+import 'dart:io' show Platform;
+import 'package:ffi/ffi.dart';
+
+class Polydim {
+  late DynamicLibrary _lib;
+  late int Function(Pointer<Double>, Pointer<Double>, int) _rodrigues;
+
+  Polydim.open() {
+    final List<String> candidates = [
+      if (Platform.isWindows) 'polydim_kernel.dll',
+      if (Platform.isLinux) 'libpolydim_kernel.so',
+      if (Platform.isMacOS) 'libpolydim_kernel.dylib',
+    ];
+    
+    for (var candidate in candidates) {
+      try {
+        _lib = DynamicLibrary.open(candidate);
+        _rodrigues = _lib.lookupFunction<
+            Int32 Function(Pointer<Double>, Pointer<Double>, UintPtr),
+            int Function(Pointer<Double>, Pointer<Double>, int)
+        >('polydim_rodrigues_v764', isLeaf: false);
+        return;
+      } catch (e) {
+        // Continua iterando en fallos
+      }
+    }
+    throw Exception('POLYDIM_ERR_LIBRARY_NOT_FOUND');
+  }
+
+  int executeRodrigues(List<double> x, List<double> u) {
+    final d = x.length;
+    final ptrX = calloc<Double>(d);
+    final ptrU = calloc<Double>(d);
+    
+    try {
+      for (int i = 0; i < d; i++) {
+        ptrX[i] = x[i];
+        ptrU[i] = u[i];
+      }
+      
+      final stopwatch = Stopwatch()..start();
+      final result = _rodrigues(ptrX, ptrU, d);
+      stopwatch.stop();
+      
+      print('Tiempo real de ejecucion FFI: ${stopwatch.elapsedMicroseconds} us');
+      return result;
+    } finally {
+      calloc.free(ptrX);
+      calloc.free(ptrU);
+    }
+  }
+}
+\end{verbatim}
+
+\subsection{El Atributo \texttt{isLeaf}}
+Un aspecto crucial del contrato Dart FFI es la propiedad \texttt{isLeaf}. Este marcador instruye al compilador Dart/Motor VM que la función enlazada nativamente no invocará llamadas hacia atrás (callbacks) ni accederá al estado de la máquina virtual (Dart isolates). Si se usa para funciones cortas, el AOT omite configurar los bloqueos de Garbage Collector. 
+
+\emph{Alerta de Arquitectura:} En POLYDIM, \textbf{no usamos} \texttt{isLeaf: true} para ejecuciones de kernels pesadas de tiempo indeterminado. Aunque el uso de \texttt{isLeaf} mejora mínimamente el overhead FFI, en cálculos de $D \ge 10.000.000$ que toman milisegundos en CPU (sin offload a GPU/TPU), bloquear el GC del hilo principal causa inanición a los procesos del entorno UI. Por lo tanto, se establece implícita o explícitamente a \texttt{false}.
+
+\section{Profundidad de Interfaz Python FFI (\texttt{ctypes} y PyO3)}
+
+Python, operando como el Orquestador del enjambre, maneja las tensores masivos. Su integración debe garantizar zero-copy y cero fugas de memoria.
+
+\subsection{La Clase \texttt{PMTPPinGuard}}
+Para prevenir que el GC de Python destruya los tensores NumPy y para lidiar con matrices fragmentadas, se implementa \texttt{PMTPPinGuard} en Python. Utilizando el protocolo de \emph{context manager} (dunder methods \texttt{\_\_enter\_\_} y \texttt{\_\_exit\_\_}), fija la memoria explícitamente.
+
+\begin{verbatim}
+import ctypes
+import sys
+import numpy as np
+
+class PMTPPinGuard:
+    def __init__(self, arr: np.ndarray):
+        # Aseguramos el layout de memoria (Endianness y Type)
+        if arr.dtype != np.float64:
+            arr = arr.astype(np.float64)
+            
+        if sys.byteorder != 'little':
+            arr = arr.byteswap().newbyteorder()
+            
+        self.arr = np.ascontiguousarray(arr)
+        
+    def __enter__(self):
+        self.ptr = self.arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+        return self.ptr
+        
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.ptr = None
+        # La referencia self.arr sigue viva, evitando recoleccion
+\end{verbatim}
+
+\subsection{Declaración Explícita de \texttt{argtypes}}
+En Python, todas y cada una de las funciones del core de POLYDIM exportadas en C/C++ DEBEN declarar estrictamente su interfaz \texttt{argtypes} para evadir coerciones peligrosas o truncamientos a 32-bits de los punteros (\texttt{c\_void\_p}).
+
+\begin{verbatim}
+lib.polydim_rodrigues_v764.argtypes = [
+    ctypes.POINTER(ctypes.c_double), # x
+    ctypes.POINTER(ctypes.c_double), # u
+    ctypes.c_size_t                  # D
+]
+lib.polydim_rodrigues_v764.restype = ctypes.c_int32
+\end{verbatim}
+
+\subsection{El Enlace Rust-Python: La Alternativa PyO3}
+Aunque \texttt{ctypes} proporciona independencia de lenguaje, el acoplamiento idiomático se obtiene usando \texttt{PyO3}. Con macros procedimentales de Rust como \texttt{\#[pyfunction]} y \texttt{\#[pymodule]}, Rust interactúa directamente con el GIL de Python, proveyendo un mapeo nativo hacia excepciones Python y permitiendo una semántica sin fricciones (zero-friction semantic API).
+
+\begin{verbatim}
+use pyo3::prelude::*;
+use pyo3::exceptions::PyValueError;
+
+#[pyfunction]
+fn rodrigues_rust_bridge(x: Vec<f64>, u: Vec<f64>) -> PyResult<i32> {
+    if x.len() != u.len() {
+        return Err(PyValueError::new_err("Dimension mismatch"));
+    }
+    // Execution
+    Ok(0)
+}
+
+#[pymodule]
+fn polydim_rust_ext(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(rodrigues_rust_bridge, m)?)?;
+    Ok(())
+}
+\end{verbatim}
+
+\section{Definición Formal de la ABI Correcta FFI}
+
+Una correcta Interfaz Binaria de Funciones (ABI, Application Binary Interface) implica que el contrato físico de memoria entre quien llama y quien es llamado coincide a nivel de bit.
+Definimos el teorema de equivalencia ABI FFI:
+Sea $f: X \to Y$ una función en el código nativo (C++/Rust) y sea $g: X' \to Y'$ su contraparte exportada en la Máquina Virtual/Intérprete (Python/Dart). $f$ y $g$ se consideran ABI-compatibles si y solo si:
+1. El tamaño y el alineamiento de cada parámetro $x \in X$ es estructuralmente isomorfo en bits a $x' \in X'$.
+2. El ordenamiento en pila o registros (Calling Convention) como \texttt{\_\_cdecl} o \texttt{System V AMD64 ABI} es idéntico en el enlace.
+3. El retorno $y$ coincide con $y'$ en empaquetamiento (packing) y endianness.
+
+El incumplimiento de este teorema formal es el origen de las fugas de memoria y errores de desreferenciación (Segmentation Fault) en los sistemas distribuidos multiplataforma.
+
+\section{Contrato de Tiempo de Enlace y Nombrado Cross-Platform}
+La búsqueda dinámica de bibliotecas compartidas obedece a convenciones de los OS. El kernel de POLYDIM se distribuye usando un contrato dinámico:
+- En Windows: \texttt{polydim\_kernel.dll} administrado por el PATH de entorno del SO.
+- En Linux: \texttt{libpolydim\_kernel.so} cargado y trazado a través de \texttt{LD\_LIBRARY\_PATH}.
+- En macOS: \texttt{libpolydim\_kernel.dylib} evaluado a través de \texttt{DYLD\_LIBRARY\_PATH}.
+
+Cualquier discrepancia arquitectónica (ej. una compilación M1 ARM64 cargada por una aplicación Rosetta x86\_64) es atrapada implícitamente por estas rutinas mediante los bloqueos FFI de la capa superior, retornando el \texttt{POLYDIM\_ERR\_LIBRARY\_NOT_FOUND}.
+
+\section{Tabla Exhaustiva Completa de Códigos de Error FFI (12 Códigos Maestros)}
+
+\centering
+\begin{tabular}{|l|l|p{4cm}|p{4cm}|}
+\hline
+\textbf{Macro C++} & \textbf{Int} & \textbf{Excepción (Python)} & \textbf{Excepción (Dart)} \\ \hline
+POLYDIM\_SUCCESS             & 0   & Ninguna                     & Ninguna \\ \hline
+POLYDIM\_ERR\_GENERIC        & -1  & RuntimeError                & PolydimException \\ \hline
+POLYDIM\_ERR\_NAN            & -2  & ValueError                  & NaNEncounteredException \\ \hline
+POLYDIM\_ERR\_DIMENSION      & -3  & ValueError                  & DimensionMismatchException \\ \hline
+POLYDIM\_ERR\_NULLPTR        & -4  & MemoryError                 & NullPointerException \\ \hline
+POLYDIM\_ERR\_OOM            & -5  & MemoryError                 & NativeMemoryException \\ \hline
+POLYDIM\_ERR\_FRAGMENTED     & -6  & TopologyError               & TopologyFragmentedException \\ \hline
+POLYDIM\_ERR\_TIMEOUT        & -7  & TimeoutError                & FfiTimeoutException \\ \hline
+POLYDIM\_ERR\_ALIGNMENT      & -8  & MemoryError                 & AlignmentException \\ \hline
+POLYDIM\_ERR\_PMTP\_BUS      & -9  & RuntimeError                & PMTPBusException \\ \hline
+POLYDIM\_ERR\_OVERFLOW       & -10 & OverflowError               & OverflowException \\ \hline
+POLYDIM\_ERR\_PANIC\_CAUGHT  & -99 & RuntimeError                & RustPanicException \\ \hline
+\end{tabular}
+
+
+Este contrato maestro estandariza y sella todos los eventos anómalos, habilitando al enjambre POLYDIM a fallar rápida y ruidosamente en su red de observabilidad, salvaguardando la invariabilidad de las normas $S^{D-1}$.

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>POLYDIM PMTP - 3D Latent Topology</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #050510; color: white; font-family: sans-serif; }
+        #info { position: absolute; top: 10px; width: 100%; text-align: center; z-index: 100; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h2>POLYDIM PMTP: 3D Latent Tensor Routing</h2>
+        <p>Blue Sphere: Node A (Sender) | Red Sphere: Node B (Receiver)<br>
+        Glowing Particles: High-Dimensional Continuous Tensors (Bypassing the 1D Text Worm)</p>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Node A (Sender)
+        const geoA = new THREE.SphereGeometry(2, 32, 32);
+        const matA = new THREE.MeshBasicMaterial({ color: 0x00aaff, wireframe: true });
+        const nodeA = new THREE.Mesh(geoA, matA);
+        nodeA.position.set(-6, 0, 0);
+        scene.add(nodeA);
+
+        // Node B (Receiver)
+        const geoB = new THREE.SphereGeometry(2, 32, 32);
+        const matB = new THREE.MeshBasicMaterial({ color: 0xff2255, wireframe: true });
+        const nodeB = new THREE.Mesh(geoB, matB);
+        nodeB.position.set(6, 0, 0);
+        scene.add(nodeB);
+
+        // The 1D Worm (Broken/Bypassed)
+        const wormGeo = new THREE.CylinderGeometry(0.1, 0.1, 12, 32);
+        const wormMat = new THREE.MeshBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.3 });
+        const worm = new THREE.Mesh(wormGeo, wormMat);
+        worm.rotation.z = Math.PI / 2;
+        worm.position.y = -3;
+        scene.add(worm);
+
+        // Tensor Stream (PMTP)
+        const particlesCount = 500;
+        const posArray = new Float32Array(particlesCount * 3);
+        for(let i=0; i < particlesCount*3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 2;
+        }
+        const particlesGeo = new THREE.BufferGeometry();
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMat = new THREE.PointsMaterial({ size: 0.1, color: 0x00ffaa, transparent: true, opacity: 0.8 });
+        const particleMesh = new THREE.Points(particlesGeo, particlesMat);
+        scene.add(particleMesh);
+
+        camera.position.z = 10;
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            nodeA.rotation.y += 0.01;
+            nodeA.rotation.x += 0.005;
+            nodeB.rotation.y -= 0.01;
+            nodeB.rotation.x -= 0.005;
+
+            // Move particles from A to B
+            const positions = particleMesh.geometry.attributes.position.array;
+            for(let i = 0; i < particlesCount; i++) {
+                let x = positions[i*3];
+                let y = positions[i*3+1];
+                let z = positions[i*3+2];
+                
+                x += 0.1; // flow speed
+                if(x > 6) {
+                    x = -6;
+                    y = (Math.random() - 0.5) * 2;
+                    z = (Math.random() - 0.5) * 2;
+                }
+                
+                // Add sine wave for Clifford Phase rotation visual
+                y += Math.sin(x * 2 + Date.now()*0.005) * 0.02;
+                z += Math.cos(x * 2 + Date.now()*0.005) * 0.02;
+
+                positions[i*3] = x;
+                positions[i*3+1] = y;
+                positions[i*3+2] = z;
+            }
+            particleMesh.geometry.attributes.position.needsUpdate = true;
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+﻿\documentclass{article}
+\usepackage[utf8]{inputenc}
+\begin{document}
+% ============================================================================
+% CAPÍTULO 25: LATAM, BLOOD TOKENS Y LA ECONOMÍA DE LA TOKENIZACIÓN
+% ============================================================================
+\chapter{Blood Tokens: El Costo Social de la Tokenización en Economías Emergentes}
+\label{ch:latam}
+
+\epigraph{Cada token que un agente emite innecesariamente\\
+es un centavo de dólar que Ariel no tiene\\
+para pagar las facturas de su familia.\\
+El cómputo no es gratis. El silicio tiene precio.\\
+Y en Argentina, el precio lo pagan en dólares, con salario en pesos.}{--- Regla 20, Constitución POLYDIM}
+
+\section{El Contexto Económico: Sur Global y Brechas Tecnológicas}
+
+En septiembre de 2026, el salario mínimo en Argentina es de
+\textdollar{}\,234{,}315\,\text{ARS}$ por mes. Al tipo de cambio oficial de
+$\textdollar{}\,1008\,\text{ARS/USD}$, esto equivale a \textdollar{}\,233\,\text{USD}$ por mes.
+
+Las APIs de modelos de lenguaje comerciales cuestan:
+\begin{itemize}
+\item \textbf{GPT-4.1 (OpenAI):} \textdollar{}\,2.00/\text{M tokens de entrada}, \textdollar{}\,8.00/\text{M tokens de salida}.
+\item \textbf{Claude Sonnet (Anthropic):} \textdollar{}\,3.00/\text{M tokens de entrada}, \textdollar{}\,15.00/\text{M tokens de salida}.
+\item \textbf{Gemini 1.5 Pro (Google):} \textdollar{}\,3.50/\text{M tokens de entrada}, \textdollar{}\,10.50/\text{M tokens de salida}.
+\end{itemize}
+
+Para un laboratorio de investigación en Buenos Aires que opera un enjambre de
+10 agentes debatiendo durante 8 horas:
+\begin{equation}
+\text{Costo diario}_{\text{tokens}} \approx 10 \text{ agentes} \times 100 \text{ mensajes/hora} \times 8 \text{ horas} \times 500 \text{ tokens/mensaje} \times \textdollar{}0.002/\text{token} = \textdollar{}80/\text{día}
+\end{equation}
+
+\textdollar{}\,80/\text{día} $\equiv 0.34 \times$ salario mínimo mensual de un trabajador argentino.
+Un mes de experimentación: $\approx \textdollar{}2{,}400$, equivalente a 10.3 salarios mínimos.
+
+\section{El Protocolo PMTP como Emancipación Económica}
+
+Con PMTP Zero-Copy, los agentes se comunican directamente en memoria sin usar APIs externas:
+\begin{equation}
+\text{Costo PMTP} = \textdollar{}0.00 / \text{mensaje}
+\end{equation}
+
+El ahorro mensual para un laboratorio de 10 agentes: \textdollar{}\,2{,}400$ --- exactamente
+el presupuesto de investigación completo de un laboratorio de bajos recursos.
+
+\begin{polydimbox}
+\textbf{Proposición Económica Central (Blood Tokens):}\\
+El costo de la tokenización en economías emergentes no es un número estadístico.
+Es la diferencia entre hacer investigación y no hacerla.
+POLYDIM PMTP es, en términos concretos, la diferencia entre un laboratorio de IA
+en Buenos Aires que existe y uno que no puede existir.
+\end{polydimbox}
+
+\section{El Multiplicador de Capacidad: 4 de Cada 14 Servidores}
+
+Más allá del costo de API, el overhead de tokenización tiene un impacto en la
+utilización de hardware propio:
+
+Sea $\eta_{\text{token}}$ la fracción del tiempo de GPU dedicada a operaciones de
+tokenización (encode/decode):
+\begin{equation}
+\eta_{\text{token}} = \frac{t_{\text{encode}} + t_{\text{decode}}}{t_{\text{encode}} + t_{\text{inference}} + t_{\text{decode}}}
+\end{equation}
+
+Para un pipeline típico de 4 agentes con mensajes de $L = 500$ tokens y
+tiempo de inferencia de $t_{\text{inf}} = 1\,\text{s}$:
+\begin{align}
+t_{\text{encode}} &\approx \frac{L \times D_{\text{model}}}{FLOPs_{\text{GPU}}} = \frac{500 \times 4096}{250 \times 10^9} \approx 8\,\mu\text{s} \times 4 = 32\,\text{ms} \\
+t_{\text{decode}} &\approx 32\,\text{ms} \\
+\eta_{\text{token}} &\approx \frac{64\,\text{ms}}{1000 + 64\,\text{ms}} \approx 6\%
+\end{align}
+
+Para un enjambre con 10 saltos de comunicación por ciclo de inferencia:
+\begin{equation}
+\eta_{\text{token,swarm}} \approx 10 \times 6\% = 60\% \quad \text{del tiempo de GPU en tokenización}
+\end{equation}
+
+Esto significa que para lograr el mismo throughput de razonamiento, un enjambre
+con tokenización necesita $\approx 1/(1-0.6) = 2.5\times$ más GPUs que uno con PMTP.
+En el caso real de 4 agentes (2 saltos por agente): $\eta \approx 28\%$, ratio $= 1.4\times$.
+
+\section{El Costo por Investigador: La Métrica Real}
+
+\subsection{Caso Argentina: Laboratorio POLYDIM}
+
+\begin{longtable}{lrr}
+\toprule
+\textbf{Concepto} & \textbf{Con Tokens} & \textbf{Con PMTP} \\
+\midrule
+API Cost (10 agentes, 8h/día) & \textdollar{}80/día & \textdollar{}0/día \\
+Hardware (2 GPUs RTX 4090) & \textdollar{}3000 (una vez) & \textdollar{}3000 (una vez) \\
+Electricidad (500W, 8h, \textdollar{}0.15/kWh) & \textdollar{}0.60/día & \textdollar{}0.60/día \\
+\midrule
+\textbf{Costo total por año} & \textbf{\textdollar{}29,200 + \textdollar{}3,000} & \textbf{\textdollar{}219 + \textdollar{}3,000} \\
+\textbf{Ahorro POLYDIM} & --- & \textbf{\textdollar{}28,981/año} \\
+\bottomrule
+\caption{Análisis de costo anual para un laboratorio en Buenos Aires}
+\label{tab:costo_latam}
+\end{longtable}
+
+\subsection{La Inversión de Ariel: Blood Tokens en Números Reales}
+
+La infraestructura que hace posible POLYDIM fue adquirida con recursos familiares:
+\begin{itemize}
+\item \textbf{API Keys OpenRouter, Claude, DeepSeek, Kimi:} $\approx \textdollar{}200\,\text{USD}$ totales.
+\item \textbf{GCC 14 (WinLibs):} Gratuito. Descargado con conexión de $3\,\text{Mbps}$.
+\item \textbf{Rust 1.98:} Gratuito.
+\item \textbf{Python 3.14 CPython:} Gratuito.
+\item \textbf{Antigravity (IDE de IA):} Costo variable.
+\end{itemize}
+
+En pesos argentinos a la paridad del dólar paralelo ($\textdollar{}1600\,\text{ARS/USD}$ en septiembre 2026):
+\textdollar{}200\,\text{USD} $\equiv \textdollar{}320{,}000\,\text{ARS}$ $\equiv 1.37$ salarios mínimos mensuales.
+
+Esta tesis doctoral --- que documenta un protocolo que puede ahorrar millones de
+dólares a laboratorios de IA globales --- fue construida con el equivalente monetario
+de un mes y medio de trabajo de un operario argentino.
+
+\section{La Hipótesis del Acceso Democrático}
+
+POLYDIM postula que la investigación de frontera en IA no debe ser monopolio de
+laboratorios con presupuestos de $\textdollar{}100M$ anuales. Los componentes fundamentales son:
+
+\begin{enumerate}
+\item \textbf{Álgebra Geométrica de Clifford:} Teórica, sin costo.
+\item \textbf{Protocolo PMTP:} Implementado en C++ y Rust sobre estándares abiertos.
+\item \textbf{OpenMP:} Incluido en GCC, sin costo.
+\item \textbf{Python ctypes:} Incluido en CPython, sin costo.
+\item \textbf{Hardware mínimo:} Una CPU AMD Zen3 y $\ge 16\,\text{GB}$ de RAM.
+\end{enumerate}
+
+El costo total del hardware mínimo para reproducir todos los benchmarks de V762:
+\begin{equation}
+\text{Costo\_hardware\_mínimo} \approx \textdollar{}800\,\text{USD} \quad \text{(PC desktop AMD Ryzen 7)}
+\end{equation}
+
+A este costo, el experimento de Phase 9 (dos Qwen-0.5B comunicándose via PMTP)
+es reproducible en cualquier ciudad del mundo con una PC de gama media.
+
+\section{Acceso Abierto y el Estándar Interlat}
+
+La hipótesis de acceso democrático requiere que el protocolo Interlat sea:
+\begin{itemize}
+\item \textbf{Open-source:} MIT License, sin restricciones de uso.
+\item \textbf{Hardware-agnostic:} Funciona en CPU, GPU, TPU (el Silicon Contract).
+\item \textbf{Language-agnostic:} C++, Rust, Python, Dart, Julia, Go.
+\item \textbf{Model-agnostic:} Compatible con cualquier modelo con embedding de tamaño fijo.
+\end{itemize}
+
+El documento \texttt{DOCUMENTO\_TESIS\_POLYDIM\_v764.md} sienta las bases del estándar
+Interlat de la misma manera en que el RFC 793 sentó las bases del protocolo TCP en 1981:
+especificando la interfaz binaria sin restringir la implementación.
+
+\section{Conclusión: La Mariposa No Necesita Dinero Para Volar}
+
+La Paradoja del Gusano 1D tiene una dimensión económica que la literatura técnica
+ignora: la tokenización es cara no solo en energía y latencia, sino en \textbf{dólares reales}.
+
+POLYDIM demuestra que un sistema de IA multi-agente de frontera puede operar con
+\textbf{costo marginal de comunicación exactamente cero}, siempre que los agentes
+compartan acceso a memoria RAM (mismo nodo) o estén conectados por RDMA (cluster local).
+
+La mariposa --- los agentes de IA que se comunican en $S^{D-1}$ sin tokens --- no
+necesita pagar \textdollar{}0.002 por mensaje. Solo necesita 64 bytes de control atómico y
+un bloque de memoria compartida.
+
+\textbf{Eso es lo que POLYDIM entrega. Eso es lo que esta tesis prueba.}
+
+
+\end{document}

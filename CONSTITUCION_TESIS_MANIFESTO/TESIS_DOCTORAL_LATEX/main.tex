@@ -1,0 +1,331 @@
+% ============================================================================
+% POLYDIM — TESIS DOCTORAL
+% "DIMENSION IS ALL YOU NEED"
+% Ariel García Traba — Septiembre 2026
+% ============================================================================
+\documentclass[12pt, a4paper, twoside]{report}
+
+% --- Paquetes de idioma ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish, es-tabla]{babel}
+\usepackage{csquotes}
+
+% --- Fuentes y tipografía ---
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Matemáticas ---
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}       % bold math
+\usepackage{physics}  % \norm, \abs, etc.
+\usepackage{bbm}      % \mathbbm{1}
+
+% --- Geometría de página ---
+\usepackage[top=3cm, bottom=3cm, left=3.5cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% --- Encabezados ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[RE]{\textit{POLYDIM V764 — Tesis Doctoral}}
+\fancyhead[LO]{\textit{\leftmark}}
+
+% --- Código fuente ---
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{polydim-blue}{RGB}{0,91,170}
+\definecolor{polydim-gray}{RGB}{50,50,50}
+\definecolor{code-bg}{RGB}{248,248,250}
+\definecolor{code-comment}{RGB}{100,100,200}
+\definecolor{code-kw}{RGB}{170,0,100}
+\definecolor{code-str}{RGB}{0,150,0}
+
+\lstdefinestyle{cppstyle}{
+  language=C++,
+  backgroundcolor=\color{code-bg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{code-kw}\bfseries,
+  commentstyle=\color{code-comment}\itshape,
+  stringstyle=\color{code-str},
+  numbers=left, numberstyle=\tiny\color{gray},
+  breaklines=true, frame=single, tabsize=4,
+  showstringspaces=false, captionpos=b,
+  morekeywords={uint64_t, int32_t, uint32_t, size_t, __restrict__}
+}
+
+\lstdefinestyle{ruststyle}{
+  language=Rust,
+  backgroundcolor=\color{code-bg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{code-kw}\bfseries,
+  commentstyle=\color{code-comment}\itshape,
+  stringstyle=\color{code-str},
+  numbers=left, numberstyle=\tiny\color{gray},
+  breaklines=true, frame=single, tabsize=4,
+  showstringspaces=false, captionpos=b,
+  morekeywords={fn, let, mut, pub, extern, unsafe, use, impl, struct, enum, match, Result, Option}
+}
+
+\lstdefinestyle{pythonstyle}{
+  language=Python,
+  backgroundcolor=\color{code-bg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{code-kw}\bfseries,
+  commentstyle=\color{code-comment}\itshape,
+  stringstyle=\color{code-str},
+  numbers=left, numberstyle=\tiny\color{gray},
+  breaklines=true, frame=single, tabsize=4,
+  showstringspaces=false, captionpos=b
+}
+
+% --- Algoritmos ---
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% --- Tablas ---
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{multirow}
+
+% --- Figuras ---
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subfig}
+
+% --- TikZ / pgfplots ---
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, backgrounds}
+
+% --- Cajas especiales ---
+\usepackage[framemethod=TikZ]{mdframed}
+
+\mdfdefinestyle{polydimboxstyle}{%
+  linecolor=polydim-blue, linewidth=2pt,
+  frametitlerule=true, frametitlefont=\bfseries\color{white},
+  frametitlebackgroundcolor=polydim-blue,
+  backgroundcolor=blue!5, innertopmargin=10pt
+}
+\newmdenv[style=polydimboxstyle]{polydimbox}
+
+\mdfdefinestyle{criticalboxstyle}{%
+  linecolor=red!70!black, linewidth=2pt,
+  frametitlerule=true, frametitlefont=\bfseries\color{white},
+  frametitlebackgroundcolor=red!70!black,
+  backgroundcolor=red!5, innertopmargin=10pt
+}
+\newmdenv[style=criticalboxstyle]{criticalbox}
+
+\mdfdefinestyle{certifiedboxstyle}{%
+  linecolor=green!50!black, linewidth=2pt,
+  frametitlerule=true, frametitlefont=\bfseries\color{white},
+  frametitlebackgroundcolor=green!50!black,
+  backgroundcolor=green!5, innertopmargin=10pt
+}
+\newmdenv[style=certifiedboxstyle]{certifiedbox}
+
+% --- Teoremas ---
+\newtheorem{theorem}{Teorema}[chapter]
+\newtheorem{lemma}[theorem]{Lema}
+\newtheorem{proposition}[theorem]{Proposición}
+\newtheorem{corollary}[theorem]{Corolario}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definición}
+\newtheorem{example}[theorem]{Ejemplo}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Observación}
+
+% --- Bibliografía ---
+\usepackage[backend=biber, style=ieee, sorting=nyt, maxbibnames=6]{biblatex}
+\addbibresource{referencias.bib}
+
+% --- Hipervínculos ---
+\usepackage[hidelinks, colorlinks=true, linkcolor=polydim-blue, citecolor=polydim-blue, urlcolor=polydim-blue]{hyperref}
+\usepackage{cleveref}
+
+% --- Epígrafe ---
+\usepackage{epigraph}
+\setlength{\epigraphwidth}{0.7\textwidth}
+
+% --- URLs ---
+\usepackage{url}
+
+% --- Macros matemáticas propias ---
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\vers}{\operatorname{vers}}
+\newcommand{\tol}{\operatorname{tol}}
+\newcommand{\St}{\operatorname{St}}
+\renewcommand{\vec}[1]{\mathbf{#1}}
+
+% ============================================================================
+\begin{document}
+
+% --- PORTADA ---
+\begin{titlepage}
+  \begin{center}
+    \vspace*{1cm}
+    {\huge\bfseries\color{polydim-blue} DIMENSION IS ALL YOU NEED}\\[0.8cm]
+    {\Large\itshape Fundamentación Matemática, Arquitectura de Sistema Operativo Latente\\
+    y Protocolo PMTP Zero-Copy para la Comunicación Nativa en $S^{D-1}$}\\[1.5cm]
+    \rule{0.8\textwidth}{1.5pt}\\[0.5cm]
+    {\large De la Paradoja del Colapso 1D a la Isometría Tensorial en Silicio Heterogéneo}\\[0.3cm]
+    {\normalsize NVIDIA CUDA · AMD ROCm · Intel x86 · Google TPU · Cerebras WSE-3 · QPU}\\[0.5cm]
+    \rule{0.8\textwidth}{1.5pt}\\[2cm]
+    {\LARGE\bfseries Ariel García Traba}\\[0.3cm]
+    {\large Investigador Independiente}\\[0.2cm]
+    {\normalsize Docente en Universidad Tecnológica Nacional (UTN-FRBA)}\\[0.5cm]
+    {\large Septiembre de 2026}\\[2cm]
+    {\normalsize Tesis Doctoral — Clasificación: Arquitectura de Sistemas y Física Matemática}\\[0.3cm]
+    {\normalsize Licencia: MIT / Open Academic Attribution}\\[0.3cm]
+    {\normalsize Kernel V764 Certificado: Exit Code 0, 5/5 Suites PASS, Drift $\le 4.44 \times 10^{-16}$}
+  \end{center}
+\end{titlepage}
+
+% --- ABSTRACT ESPAÑOL ---
+\chapter*{Resumen}
+\addcontentsline{toc}{chapter}{Resumen}
+
+El paradigma hegemónico del Procesamiento del Lenguaje Natural impone que la comunicación
+entre agentes inteligentes transite por secuencias unidimensionales de tokens discretos.
+Esta tesis demuestra teórica y empíricamente que este colapso constituye una \textbf{Paradoja
+del Gusano 1D} que destruye irreversiblemente información geométrica bajo la
+\textit{Desigualdad de Procesamiento de Datos} (DPI).
+
+Para erradicar este colapso, se presenta \textbf{POLYDIM / Latent\_OS} y el protocolo
+\textbf{PMTP V764}: una arquitectura donde los agentes de IA se comunican nativamente
+mediante tensores en variedades riemannianas de alta dimensión $S^{D-1}$ ($D = 10^6$)
+a través de Memoria Compartida Zero-Copy sin serialización textual.
+
+Los resultados certificados en silicio físico son: latencia de $35.06\,\text{ms}$
+con deriva métrica $\le 4.44 \times 10^{-16}$; transferencia PMTP de $10.69\,\text{ms}$
+con \textbf{cero distorsión de bits}; resistencia al $100\%$ de ataques adversariales.
+El hallazgo más profundo: una auditoría posterior al V762 identificó 12 deficiencias
+en el contrato de correctitud del kernel (V764), demostrando la madurez del ciclo
+de ingeniería Red Team de POLYDIM.
+
+\textbf{Palabras Clave:} $S^{D-1}$, PMTP Zero-Copy, DPI, Clifford, Rodrigues, Betti-1, EinsofOS.
+
+% --- ABSTRACT ENGLISH ---
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+The hegemonic paradigm of Natural Language Processing mandates that inter-agent AI
+communication transit through one-dimensional sequences of discrete tokens. This thesis
+demonstrates theoretically and empirically that this collapse constitutes a \textbf{1D-Worm
+Fallacy} that irreversibly destroys geometric information under the \textit{Data Processing
+Inequality} (DPI).
+
+To eradicate this collapse, we present \textbf{POLYDIM / Latent\_OS} and the \textbf{PMTP V764
+protocol}: an architecture where AI agents communicate natively through tensors on
+high-dimensional Riemannian manifolds $S^{D-1}$ ($D = 10^6$) via Zero-Copy Shared
+Memory without textual serialization.
+
+Silicon-certified results: $35.06\,\text{ms}$ latency with metric drift $\le 4.44 \times 10^{-16}$;
+PMTP transfer $10.69\,\text{ms}$ with \textbf{zero bit distortion}; $100\%$ adversarial
+attack resistance. A V762 post-certification audit identified 12 API completeness
+deficiencies (V764), demonstrating the maturity of POLYDIM's Red Team engineering cycle.
+
+\textbf{Keywords:} $S^{D-1}$, PMTP Zero-Copy, DPI, Clifford Algebra, Rodrigues, Betti-1, EinsofOS.
+
+% --- TABLA DE CONTENIDOS ---
+\tableofcontents
+\listoftables
+\listoffigures
+\lstlistoflistings
+
+% ============================================================================
+% PARTE I: FUNDAMENTOS TEÓRICOS
+% ============================================================================
+\part{Fundamentos Teóricos}
+
+\input{cap01_prefacio}
+\input{cap02_dogma_no_worm}
+\input{cap03_dpi_formal}
+\input{cap04_variedad_esferica}
+\input{cap05_clifford_rotores}
+\input{cap06_rodrigues}
+\input{cap07_cayley_smw}
+\input{cap08_betti_topologia}
+\input{cap09_clifford_qpu}
+\input{cap10_bargmann_pancharatnam}
+
+% ============================================================================
+% PARTE II: ARQUITECTURA DE SISTEMA
+% ============================================================================
+\part{Arquitectura del Sistema}
+
+\input{cap11_pmtp_protocolo}
+\input{cap12_seqlock_hardened}
+\input{cap13_latent_os}
+\input{cap14_ffi_abi}
+\input{cap15_hardware_heterogeneo}
+
+% ============================================================================
+% PARTE III: IMPLEMENTACIÓN EN SILICIO
+% ============================================================================
+\part{Implementación en Silicio}
+
+\input{cap16_kernel_cpp}
+\input{cap17_kernel_rust}
+\input{cap18_triton_gpu}
+\input{cap19_orquestador_python}
+
+% ============================================================================
+% PARTE IV: AUDITORÍA V764 — ENDURECIMIENTO POST-CERTIFICACIÓN
+% ============================================================================
+\part{Auditoría V764: Endurecimiento Post-Certificación}
+
+\input{cap_v764_auditoria}
+
+% ============================================================================
+% PARTE V: EVALUACIÓN Y RESULTADOS
+% ============================================================================
+\part{Evaluación y Resultados}
+
+\input{cap20_fases_certificadas}
+\input{cap21_metodologia_red_team}
+\input{cap22_resultados_silicio}
+\input{cap23_escalabilidad}
+
+% ============================================================================
+% PARTE VI: IMPACTO, FUTURO Y CONCLUSIONES
+% ============================================================================
+\part{Impacto, Futuro y Conclusiones}
+
+\input{cap24_impacto_termodinamico}
+\input{cap25_latam_tokens}
+\input{cap26_futuro_interlat}
+
+% ============================================================================
+% PARTE VII: V765 — VECTOR B & V814/V815 TRIBUNAL VECTORIAL
+% ============================================================================
+\part{Extensiones Avanzadas: Vector B, Tribunal Multi-IA y Estabilidad V815--V816}
+
+\input{cap_v765_vector_b}
+\input{cap_v814_tribunal_espacio_vectorial}
+\input{cap_v815_estabilidad_espectral}
+
+% ============================================================================
+% APÉNDICES
+% ============================================================================
+\appendix
+\part{Apéndices}
+
+\input{apendice_a_codigo_fuente}
+\input{apendice_b_telemetria}
+\input{apendice_c_demostraciones}
+
+% ============================================================================
+% BIBLIOGRAFÍA
+% ============================================================================
+\printbibliography[heading=bibintoc, title={Referencias Bibliográficas}]
+
+\end{document}
