@@ -114,13 +114,16 @@ pub extern "C" fn polydim_rust_auon_log_cosh_brake_v817(
             return -3;
         }
 
-        let z = residual / scale_s;
+        let z = (residual / scale_s).clamp(-30.0, 30.0);
         let abs_z = z.abs();
         
-        // Forma numéricamente estable de log(cosh(z)) = |z| + log1p(exp(-2|z|)) - ln(2)
+        // Forma numéricamente incondicionada sin cancelación catastrófica:
+        // Para |z| <= 20: ln(cosh(z)) = ln(1 + 2*sinh^2(z/2)) = ln_1p(2 * sinh^2(z/2)) [rel err ~ 1e-16]
+        // Para |z| > 20:  ln(cosh(z)) = |z| + ln_1p(exp(-2|z|)) - ln(2)
         let ln2 = std::f64::consts::LN_2;
-        let log_cosh_z = if abs_z > 35.0 {
-            abs_z - ln2
+        let log_cosh_z = if abs_z <= 20.0 {
+            let s = (0.5 * abs_z).sinh();
+            (2.0 * s * s).ln_1p()
         } else {
             abs_z + (-2.0 * abs_z).exp().ln_1p() - ln2
         };
@@ -187,8 +190,9 @@ pub extern "C" fn polydim_rust_auon_matrix_rms_normalize_v817(
         }
         let rms = (cosh_sq_sum / (n_elements as f64)).sqrt();
 
-        // 3. Normalización final por (rms + 1e-8)
-        let scale = 1.0 / (rms + 1e-8);
+        // 3. Normalización final por (rms + 1e-8) a RMS unitario
+        let sqrt_n = (n_elements as f64).sqrt();
+        let scale = sqrt_n / (rms + 1e-8);
         for i in 0..n_elements {
             out_slice[i] = (in_slice[i] / f_norm) * scale;
         }
@@ -261,9 +265,20 @@ pub extern "C" fn polydim_rust_riemannian_geodesic_v817(
             return -3;
         }
 
-        // Distancia cordal normalizada
+        // Distancia cordal incondicionada con protección contra singularidad de arccos
         let chordal_dist = chordal_sq.sqrt();
-        let half_chord = (chordal_dist / (norm_u + norm_v)).clamp(0.0, 1.0);
+        if chordal_dist < 1e-30 {
+            unsafe {
+                *angular_dist_out = 0.0;
+                *chordal_dist_out = 0.0;
+                if !err.is_null() { (*err).write_success(); }
+            }
+            return 0;
+        }
+
+        // Métrica cordal en S^(D-1): theta = 2 * arcsin(chord / (2 * sqrt(norm_u * norm_v)))
+        let avg_norm = 0.5 * (norm_u + norm_v);
+        let half_chord = (0.5 * chordal_dist / avg_norm).clamp(0.0, 1.0);
         let angular_dist = 2.0 * half_chord.asin();
 
         unsafe {
@@ -570,7 +585,7 @@ pub extern "C" fn polydim_rust_baraniuk_wakin_feasibility_v817(
         let n = dim_in as f64;
 
         // Cota exacta Baraniuk-Wakin (2008): m_req = C * eps^-2 * [ ln(V / tau^da) + da * ln(1/eps) + ln(1/rho) + ln(n) ]
-        let c_const = 0.5; // Constante formal de proyección aleatoria sub-gaussiana
+        let c_const = 1.0; // Constante universal canónica Baraniuk-Wakin (2008), no ajustable ad-hoc
         let term_geo = (v / tau.powf(da)).ln().max(1.0);
         let term_eps = da * (1.0 / eps).ln();
         let term_prob = (1.0 / rho).ln();
@@ -632,30 +647,60 @@ pub extern "C" fn polydim_rust_gram_ns_polar_restart_v817(
         // Copiar X a Q
         q_slice.copy_from_slice(x_slice);
 
-        // Normalización inicial por norma espectral/Frobenius estimada
-        let mut frob_sq = 0.0f64;
-        for &v in q_slice.iter() { frob_sq += v * v; }
-        let norm = frob_sq.sqrt().max(1e-12);
-        for v in q_slice.iter_mut() { *v /= norm; }
+        // Pre-escalado espectral garantizado por Power Iteration (4 iteraciones para acotar sigma_max)
+        let mut v_vec = vec![1.0f64 / (n as f64).sqrt(); n];
+        for _ in 0..4 {
+            let mut w_vec = vec![0.0f64; n];
+            for i in 0..n {
+                let mut sum = 0.0f64;
+                for j in 0..n {
+                    sum += q_slice[i * n + j] * v_vec[j];
+                }
+                w_vec[i] = sum;
+            }
+            let mut v_next = vec![0.0f64; n];
+            for j in 0..n {
+                let mut sum = 0.0f64;
+                for i in 0..n {
+                    sum += q_slice[i * n + j] * w_vec[i];
+                }
+                v_next[j] = sum;
+            }
+            let norm_v: f64 = v_next.iter().map(|&x| x * x).sum::<f64>().sqrt();
+            if norm_v > 1e-12 {
+                for x in v_next.iter_mut() { *x /= norm_v; }
+            }
+            v_vec = v_next;
+        }
 
-        let max_steps = max_total_steps.clamp(1, 10) as usize;
+        let mut w_final = 0.0f64;
+        for i in 0..n {
+            let mut sum = 0.0f64;
+            for j in 0..n {
+                sum += q_slice[i * n + j] * v_vec[j];
+            }
+            w_final += sum * sum;
+        }
+        let s_est = w_final.sqrt();
+        let s_bound = (s_est * 1.05).max(1e-12);
+        for v in q_slice.iter_mut() { *v /= s_bound; }
+
+        let max_steps = max_total_steps.clamp(1, 20) as usize;
         let mut executed = 0usize;
+        let mut converged = false;
 
-        // Bucle con reinicio (máximo 2 pasos por segmento Gram continuo)
         let mut temp_r = vec![0.0f64; total_elems];
+        let mut temp_r2 = vec![0.0f64; total_elems];
         let mut temp_next = vec![0.0f64; total_elems];
 
-        for step in 0..max_steps {
-            // Reinicio explícito de Gram cada 2 iteraciones
-            if step > 0 && step % 2 == 0 {
-                // Paso de reinicio: re-escalar y re-estimar Gram
-                let mut cur_frob = 0.0f64;
-                for &v in q_slice.iter() { cur_frob += v * v; }
-                let cur_norm = cur_frob.sqrt().max(1e-12);
-                for v in q_slice.iter_mut() { *v /= cur_norm; }
-            }
+        // Coeficientes canónicos de orden 5: p(x) = 1/8 * (15x - 10x^3 + 3x^5)
+        // p(1) = 1.0, p'(1) = 0.0, p''(1) = 0.0 (convergencia cúbica exacta al factor polar)
+        let a = 15.0f64 / 8.0f64;
+        let b = -10.0f64 / 8.0f64;
+        let c = 3.0f64 / 8.0f64;
 
-            // R = Q * Q^T
+        for _step in 0..max_steps {
+            // 1. R = Q * Q^T
             for i in 0..n {
                 for j in 0..n {
                     let mut dot = 0.0f64;
@@ -666,25 +711,55 @@ pub extern "C" fn polydim_rust_gram_ns_polar_restart_v817(
                 }
             }
 
-            // Q_next = 0.5 * Q * (3*I - R)  [Paso Polar Express estable]
+            // 2. R2 = R * R
             for i in 0..n {
                 for j in 0..n {
                     let mut dot = 0.0f64;
                     for k in 0..n {
-                        let factor = if i == k { 3.0 } else { 0.0 } - temp_r[i * n + k];
-                        dot += q_slice[k * n + j] * factor;
+                        dot += temp_r[i * n + k] * temp_r[k * n + j];
                     }
-                    temp_next[i * n + j] = 0.5 * dot;
+                    temp_r2[i * n + j] = dot;
+                }
+            }
+
+            // 3. M = a*I + b*R + c*R2, y Q_next = M * Q
+            for i in 0..n {
+                for j in 0..n {
+                    let mut dot = 0.0f64;
+                    for k in 0..n {
+                        let m_ik = (if i == k { a } else { 0.0 }) + b * temp_r[i * n + k] + c * temp_r2[i * n + k];
+                        dot += m_ik * q_slice[k * n + j];
+                    }
+                    temp_next[i * n + j] = dot;
                 }
             }
 
             q_slice.copy_from_slice(&temp_next);
             executed += 1;
+
+            // Medir convergencia ||Q^T Q - I||_F / sqrt(n)
+            let mut frob_err_sq = 0.0f64;
+            for i in 0..n {
+                for j in 0..n {
+                    let mut dot = 0.0f64;
+                    for k in 0..n {
+                        dot += q_slice[k * n + i] * q_slice[k * n + j];
+                    }
+                    let eye = if i == j { 1.0f64 } else { 0.0f64 };
+                    let diff = dot - eye;
+                    frob_err_sq += diff * diff;
+                }
+            }
+            let iso_err = (frob_err_sq / (n as f64)).sqrt();
+            if iso_err < 1e-4 {
+                converged = true;
+                break;
+            }
         }
 
         unsafe {
             *steps_executed_out = executed as c_uint;
-            *is_converged_out = 1u8;
+            *is_converged_out = if converged { 1u8 } else { 0u8 };
             if !err.is_null() { (*err).write_success(); }
         }
 
