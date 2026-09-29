@@ -75,12 +75,13 @@ X_{k+1} = X_k \left( \frac{3}{2} I - \frac{1}{2} X_k^T X_k \right)
 únicamente ortogonaliza una matriz degenerada $\tilde{X} = X + E_{\text{BF16}}$, preservando el ruido numérico y acelerando el drift tangencial fuera de la geodésica.
 \end{theorem}
 
-\subsection{Soluciones SOTA 2025--2026: Prevención en Origen}
-Para neutralizar la cancelación catastrófica en $S^{D-1}$, el Kernel POLYDIM adopta los siguientes mecanismos certificados:
+\subsection{Soluciones SOTA 2025--2026: Prevención en Origen y Refinamiento Numérico}
+Para neutralizar la cancelación catastrófica en $S^{D-1}$ y garantizar la convergencia polar en silicio heterogéneo, el Kernel POLYDIM adopta los siguientes mecanismos certificados:
 \begin{enumerate}
-    \item \textbf{Precondicionamiento de Segundo Momento en FP32 (Paradigma Muon$^2$):} Se acumulan los momentos adaptativos estrictamente en $\text{FP32}$ ($\tilde{B}_t = B_t / (\sqrt{V_t} + \epsilon)$) antes de cualquier paso de retracción, comprimiendo el espectro de valores singulares fuera de la zona de singularidad.
-    \item \textbf{Adaptación por Dimensión (AdaNewton / ROOT):} Se eliminan los coeficientes fijos de Newton-Schulz, sustituyéndolos por tablas pre-optimizadas $\{a^{(m,n)}, b^{(m,n)}, c^{(m,n)}\}$ por dimensión $(m,n)$ y filtrado \textit{soft-threshold} contra colas pesadas.
-    \item \textbf{Acotamiento de Iteraciones (Dao Lab Bound):} Se limita rigurosamente $q \le 2$ iteraciones en aproximaciones de Newton-Schulz para impedir la generación de autovalores negativos espurios en $Q_t = X_t^T X_t$.
-    \item \textbf{Región de Confianza Espectral Lineal (AuON):} Para $D \ge 10^6$, se sustituye la ortogonalización $O(n^2)$ por normalización espectral y escalado no lineal acotado en $O(n)$.
+    \item \textbf{Normalización por Fila Post-Newton-Schulz (Paradigma NorMuon):} Se calcula la proyección polar $O_t = \text{NS}(M_t)$ y se aplica normalización por fila/neurona con un vector de solo $D$ escalares ($O(D)$ memoria extra vs $O(D^2)$ de buffers densos), permitiendo sharding sin comunicación inter-proceso en PMTP IPC.
+    \item \textbf{Escalado de RMS por Forma Geométrica (Estándar Moonlight):} Para tensores de compresión extrema ($D = 10^6, K = 32$), se aplica la escala $s(D, K) = \rho \sqrt{\max(D, K)}$ con $\rho = 0.2$. La raíz cuadrada cancela exactamente la dependencia dimensional ($\operatorname{RMS}(O) = 1/\sqrt{D}$), manteniendo la RMS por parámetro invariante en $\rho = 0.2$ y permitiendo auditar la isometría $\epsilon_{\text{iso}} = \|\widetilde{O}^T \widetilde{O} - I_K\|_2$ con costo $O(K^2) = 32 \times 32$ en RAM.
+    \item \textbf{Calendario de Reinicios de Gram (Dao Lab Bound Extendido):} En representaciones de baja precisión (`fp16`/`bf16`), para impedir que autovalores negativos espurios ($r_t < 0$) diverjan en $r_{t} = r_{t-1} h_t(r_{t-1})^2$, se acota la longitud de tramo a $q_{\text{segmento}} \le 2$ y se implementa la partición de reinicios periódicos $[2, 3, 2, \dots]$. En CPU local (AMD A4 Floor), se ejecuta en FP32/FP64 nativo garantizando semidefinición positiva ($R \succeq 0$) y fidelidad $\|Q^T Q - I\|_F \le 10^{-8}$.
+    \item \textbf{Refutación de AuON y Freno Espectral Log-Cosh / LogSumExp:} Se demuestra formalmente que AuON es una homotecia escalar $U = cG$ que no altera el espectro singular ni acerca a la variedad de Stiefel ($\kappa(U) = \kappa(G)$ es invariante). Se adopta MuonW híbrido con freno de emergencia evaluado en el dominio log-cosh acotado ($\max_i |x_i| \le 30$) mediante reducciones LogSumExp estables contra overflow en float32.
+    \item \textbf{Calibración Espectral Minimax (ROOT / AdaNewton):} Se erradica la noción de optimización conjunta online, empleando exclusivamente tablas estáticas pre-calculadas mediante optimización minimax sobre distribuciones empíricas previas (ratio 1:3 real/sintético).
 \end{enumerate}
 
