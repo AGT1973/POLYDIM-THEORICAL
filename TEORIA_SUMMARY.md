@@ -1,3 +1,11 @@
+# POLYDIM — Theory Semantic Index & Thesis Corpus / Índice Semántico de la Teoría
+
+> **Language Notice / Nota de Idioma:**  
+> 🇬🇧 **English Overview:** Comprehensive semantic index of the 34 doctoral thesis chapters, 103 formal theorems, 211 equations, and physical silicon benchmarks.  
+> 🇦🇷 **Resumen en Español:** Índice semántico detallado de los 34 capítulos de la tesis doctoral, 103 teoremas formales, 211 ecuaciones y benchmarks certificados en silicio.
+
+---
+
 # POLYDIM — Vector Semántico de la Tesis
 
 **Capítulos:** 34 | **Generado:** 2026-09-21
