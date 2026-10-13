@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-10-12T20:00:23-0300",
+  "lipschitz_contraction_test": {
+    "dimension_D": 4096,
+    "pairs_evaluated": 500,
+    "measured_L_F_max": 0.998,
+    "measured_L_F_mean": 0.998,
+    "contraction_margin_delta": 0.002,
+    "bound_satisfied": true
+  },
+  "rest_vs_pmtp_benchmark": {
+    "dimension_D": 16384,
+    "iterations": 50,
+    "http_rest_json_mean_us": 146247.38,
+    "http_rest_json_mean_ms": 146.247,
+    "pmtp_shm_zerocopy_mean_us": 6.21,
+    "pmtp_ops_per_sec": 161082.4,
+    "measured_speedup_vs_rest": 23557.9
+  }
+}

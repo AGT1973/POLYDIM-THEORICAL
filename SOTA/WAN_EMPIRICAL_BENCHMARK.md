@@ -1,29 +1,29 @@
-# BENCHMARK EMPÍRICO FASE 10 (Modo Nocturno 11H)
+# Telemetría Empírica Real: Reconstrucción FWHT bajo Pérdida de Paquetes en Ráfaga
+**Autor:** Ariel García Traba (POLYDIM-EINSOF Independent Research)  
+**Script Generador:** `E:\POLYDIM-THEORICAL\verification_suite\bench_wan_wht_real.py`  
+**CSV Crudo:** `E:\POLYDIM-THEORICAL\verification_suite\wan_wht_empirical_telemetry.csv`  
+**SHA-256 del CSV:** `ed2e985936e785d751a9e9097e9f9e66536f14b517fc210bd8d6b19d90ab4a22`  
+**Nota Metodológica:** Reemplaza la tabla sintética previa. Simulación Monte Carlo en silicio real ($D=65536$, bloques de paquete de 256 floats, 5 semillas estocásticas por nivel de pérdida) midiendo la preservación de picos localizados bajo pérdida en ráfaga (burst loss) con y sin pre-dispersión de Walsh-Hadamard (`fwht_inplace`).
 
-Validación matemática del Drift Topológico bajo pérdida extrema de paquetes en WAN.
-Dimensiones: D = 1,000,000 | Transporte: UDP Simulado | Corrección: WHT + Clifford
-
-### Iteración 1 (21:12:46)
-- **Pérdida de Paquetes WAN:** 5.0%
-- **Error Cuadrático Medio (Sin Proteger):** 0.1250
-- **Error Cuadrático Medio (PMTP Clifford):** 0.000025
-- **Drift Geométrico:** 0.000010
-
-### Iteración 2 (21:12:48)
-- **Pérdida de Paquetes WAN:** 10.0%
-- **Error Cuadrático Medio (Sin Proteger):** 0.2500
-- **Error Cuadrático Medio (PMTP Clifford):** 0.000100
-- **Drift Geométrico:** 0.000010
-
-### Iteración 3 (21:12:50)
-- **Pérdida de Paquetes WAN:** 15.0%
-- **Error Cuadrático Medio (Sin Proteger):** 0.3750
-- **Error Cuadrático Medio (PMTP Clifford):** 0.000225
-- **Drift Geométrico:** 0.000400
-
-### Iteración 4 (21:12:52)
-- **Pérdida de Paquetes WAN:** 20.0%
-- **Error Cuadrático Medio (Sin Proteger):** 0.5000
-- **Error Cuadrático Medio (PMTP Clifford):** 0.000400
-- **Drift Geométrico:** 0.000400
-
+| Pérdida Nominal (%) | Pérdida Efectiva (%) | Seed | MSE Directo | MSE con FWHT | Coseno Directo | Coseno FWHT | Latencia (ms) |
+|---|---|---|---|---|---|---|---|
+| 5.0 | 4.69 | 101 | `6.30778027e-07` | `7.07003110e-07` | 0.979331 | 0.976833 | 152.578 |
+| 5.0 | 7.42 | 202 | `5.36271414e-07` | `1.17708927e-06` | 0.982427 | 0.961429 | 67.741 |
+| 5.0 | 6.25 | 303 | `4.07340177e-07` | `9.79099754e-07` | 0.986652 | 0.967917 | 68.967 |
+| 5.0 | 5.86 | 404 | `1.71705950e-07` | `8.73719046e-07` | 0.994374 | 0.971370 | 152.996 |
+| 5.0 | 5.47 | 505 | `5.70538549e-07` | `8.38590408e-07` | 0.981305 | 0.972521 | 294.082 |
+| 10.0 | 8.20 | 101 | `9.52792479e-07` | `1.27023233e-06` | 0.968779 | 0.958377 | 95.546 |
+| 10.0 | 11.72 | 202 | `1.16177237e-06` | `1.89012574e-06` | 0.961931 | 0.938064 | 173.722 |
+| 10.0 | 10.94 | 303 | `5.09794452e-07` | `1.72303566e-06` | 0.983295 | 0.943540 | 207.637 |
+| 10.0 | 10.16 | 404 | `3.61971381e-07` | `1.58929916e-06` | 0.988139 | 0.947922 | 60.649 |
+| 10.0 | 11.33 | 505 | `6.49673908e-07` | `1.75681449e-06` | 0.978711 | 0.942433 | 60.681 |
+| 15.0 | 12.89 | 101 | `1.00140702e-06` | `2.02553508e-06` | 0.967186 | 0.933627 | 51.403 |
+| 15.0 | 15.62 | 202 | `1.17862707e-06` | `2.54733217e-06` | 0.961379 | 0.916529 | 50.479 |
+| 15.0 | 16.02 | 303 | `1.22684811e-06` | `2.57002466e-06` | 0.959799 | 0.915785 | 39.518 |
+| 15.0 | 15.62 | 404 | `1.03150598e-06` | `2.48872096e-06` | 0.966200 | 0.918450 | 42.551 |
+| 15.0 | 14.84 | 505 | `1.45256946e-06` | `2.31403171e-06` | 0.952402 | 0.924174 | 57.509 |
+| 20.0 | 16.80 | 101 | `1.23656339e-06` | `2.66373413e-06` | 0.959480 | 0.912715 | 94.523 |
+| 20.0 | 19.53 | 202 | `2.53267114e-06` | `3.20995332e-06` | 0.917009 | 0.894816 | 50.064 |
+| 20.0 | 19.53 | 303 | `1.72596407e-06` | `3.16766420e-06` | 0.943444 | 0.896202 | 54.485 |
+| 20.0 | 19.53 | 404 | `1.87350919e-06` | `3.17192823e-06` | 0.938609 | 0.896062 | 52.089 |
+| 20.0 | 18.75 | 505 | `2.98965387e-06` | `2.95215654e-06` | 0.902035 | 0.903264 | 59.117 |

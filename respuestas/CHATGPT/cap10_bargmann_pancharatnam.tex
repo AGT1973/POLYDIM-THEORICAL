@@ -1,0 +1,111 @@
+% ============================================================================
+% CAPÍTULO 10: INVARIANTE DE BARGMANN-PANCHARATNAM Y FASE GEOMÉTRICA
+% ============================================================================
+\chapter{El Invariante de Bargmann-Pancharatnam: Fase Geométrica en $S^{D-1}$}
+\label{ch:bargmann}
+
+\epigraph{La fase que acumula un sistema cuántico al recorrer\\
+un camino cerrado no depende del camino sino de la superficie\\
+encerrada. Es la huella de la geometría sobre la física.}{--- Berry, 1984}
+
+\section{Origen Físico: La Fase de Berry}
+
+En 1984, Michael Berry descubrió que un sistema cuántico que evoluciona
+\textit{adiabáticamente} a lo largo de un ciclo cerrado en el espacio de
+parámetros $\mathcal{M}$ acumula una fase $\gamma$ que depende únicamente
+de la geometría del camino, no de la velocidad de recorrido ni de la dinámica:
+
+\begin{equation}
+\gamma_B = i \oint_C \langle \psi(\mathbf{R}) | \nabla_{\mathbf{R}} | \psi(\mathbf{R}) \rangle \cdot d\mathbf{R}
+\label{eq:berry_phase}
+\end{equation}
+
+Esta fase no es un artefacto: es observable mediante interferometría y ha sido
+medida en sistemas ópticos, espines nucleares, y superconductores.
+
+\section{El Invariante de Bargmann-Pancharatnam}
+
+La generalización discreta de la fase de Berry, debida a Bargmann (1964) y
+Pancharatnam (1956), no requiere adiabaticidad ni evolución continua. Para una
+secuencia discreta de estados $|\psi_0\rangle, |\psi_1\rangle, \ldots, |\psi_n\rangle$
+con $|\psi_n\rangle = |\psi_0\rangle$ (ciclo cerrado):
+
+\begin{equation}
+\phi_{\text{BP}} = \arg\left(\langle\psi_0|\psi_1\rangle \langle\psi_1|\psi_2\rangle \cdots \langle\psi_{n-1}|\psi_n\rangle\right)
+\label{eq:bargmann_pancharatnam}
+\end{equation}
+
+\begin{theorem}[Invarianza del Invariante de Bargmann-Pancharatnam]
+$\phi_{\text{BP}}$ es invariante bajo rephasing local: si se reemplaza
+$|\psi_k\rangle \to e^{i\alpha_k}|\psi_k\rangle$ para escalares arbitrarios
+$\alpha_k$, el producto de solapamientos satisface:
+\begin{equation}
+\prod_{k=0}^{n-1} \langle\psi_k| e^{-i\alpha_k} e^{i\alpha_{k+1}} |\psi_{k+1}\rangle = e^{i(\alpha_{n} - \alpha_0)} \prod_{k=0}^{n-1} \langle\psi_k|\psi_{k+1}\rangle
+\end{equation}
+Para un ciclo ($\alpha_n = \alpha_0$), los factores de fase se cancelan exactamente.
+\end{theorem}
+
+\section{Interpretación en $S^{D-1}$: Curvatura Acumulada}
+
+En POLYDIM, los estados son puntos $\mathbf{x}_k \in S^{D-1}$ (vectores unitarios reales).
+El solapamiento cuántico $\langle\psi_k|\psi_{k+1}\rangle$ corresponde al producto
+interior $\langle \mathbf{x}_k, \mathbf{x}_{k+1} \rangle \in [-1, 1]$.
+
+Para un ciclo de $n$ rotaciones de Rodrigues sobre $S^{D-1}$, el invariante de Bargmann-Pancharatnam es:
+
+\begin{equation}
+\phi_{\text{POLYDIM}} = \arg\left(\prod_{k=0}^{n-1} \langle \mathbf{x}_k, \mathbf{x}_{k+1} \rangle\right)
+= \sum_{k=0}^{n-1} \text{sgn}(\langle \mathbf{x}_k, \mathbf{x}_{k+1}\rangle) \cdot \theta_k
+\label{eq:bp_polydim}
+\end{equation}
+
+donde $\theta_k = \arccos(\langle \mathbf{x}_k, \mathbf{x}_{k+1}\rangle)$ es la distancia
+geodésica entre estados consecutivos.
+
+\begin{proposition}[Invariante BP como Detector de Holonomía]
+Si $\phi_{\text{POLYDIM}} \ne 0$ para un ciclo cerrado de rotaciones de Rodrigues,
+entonces las rotaciones no conmutan y el ciclo produce holonomía --- el vector
+de estado final no coincide con el inicial incluso si el camino regresa al mismo punto.
+\end{proposition}
+
+\section{Relevancia para POLYDIM: Detección de Deriva Acumulada}
+
+La holonomía en $S^{D-1}$ es un problema práctico en pipelines de rotación encadenada:
+si se aplican $N$ rotaciones de Rodrigues sucesivas con el objetivo de implementar
+una transformación compuesta, la deriva acumulada puede superar $\varepsilon_{\text{mach}}$
+incluso cuando cada rotación individual tiene drift $\le \varepsilon_{\text{mach}}$.
+
+El invariante de Bargmann-Pancharatnam permite cuantificar esta deriva sin comparar
+directamente los vectores:
+
+\begin{equation}
+\text{Drift acumulado} \approx \frac{|\phi_{\text{BP}}|}{D} \cdot \text{Constante de normalización}
+\end{equation}
+
+\section{Conexión con el Invariante de Higham}
+
+El Teorema 4.3 de Higham provee la cota de error \textit{local} por operación:
+\begin{equation}
+\text{Error local} \le (2D + 50)\varepsilon_{\text{mach}} \quad \text{(sin Neumaier)}
+\end{equation}
+
+Para $N$ operaciones encadenadas, la cota ingenuamente sería $N \times \text{Error local}$.
+El invariante de Bargmann-Pancharatnam provee una cota \textit{geométrica} alternativa
+que puede ser mucho más estricta cuando las rotaciones son casi conmutativas:
+
+\begin{equation}
+\text{Drift acumulado}_{\text{BP}} \le \frac{2}{\sqrt{D}} \cdot |\phi_{\text{BP}}| + N \cdot \varepsilon_{\text{mach}}
+\end{equation}
+
+\section{Aplicación Cuántica: Clifford Twirling como Anulación de BP}
+
+El \textit{Clifford Twirling} (Randomized Compiling) de V764 tiene una interpretación
+elegante en términos del invariante de Bargmann-Pancharatnam: al aleatorizar las
+compuertas Clifford alrededor de cada compuerta T, se impide que las fases de BP
+de errores sucesivos se acumulen coherentemente.
+
+Sin twirling: $\phi_{\text{BP}}^{\text{error}} \propto N\varepsilon$ (acumulación lineal).
+Con twirling: $\phi_{\text{BP}}^{\text{error}} \propto \sqrt{N}\varepsilon$ (acumulación aleatoria).
+
+Esto es exactamente la transformación de ``ruido coherente a ruido incoherente'' descrita
+en el Capítulo~\ref{ch:clifford_qpu}.

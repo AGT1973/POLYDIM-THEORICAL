@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-10-12T19:54:38-0300",
+  "aladin_ip": "192.168.100.21",
+  "aladin_pmtp_port": 9999,
+  "pmtp_socket_telemetry": {
+    "probes": 20,
+    "min_rtt_us": 505.9,
+    "avg_rtt_us": 108222.71
+  },
+  "aladin_ssh_telemetry": {
+    "ssh_exit_code": 0,
+    "stdout": "Linux AGY-server 6.12.111+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.111-1 (2026-09-28) x86_64 GNU/Linux\nmodel name\t: Intel(R) Core(TM) i3-8100 CPU @ 3.60GHz\n               total        used        free      shared  buff/cache   available\nMem:            7819        4361        1224         601        3013        3457\nSwap:           8063         497        7566\nDDR4_STREAM_COPY_GBS=6.93",
+    "stderr": ""
+  },
+  "host_memory_hierarchy_measured": {
+    "cpu": "AMD A4-6300 APU (2C/2T, DDR3)",
+    "l1_cache_working_set_kb": 8,
+    "l1_effective_bw_gbs": 3.22,
+    "dram_working_set_mb": 64,
+    "dram_stream_copy_bw_gbs": 3.17,
+    "explanation": "Los 229 GB/s reportados en tests de descriptores corresponden a operaciones en registros/L1 Cache (128B header), mientras que el barrido STREAM sobre 64 MB en DRAM DDR3 del Host mide ~3.0-4.5 GB/s reales. El servidor Aladín opera sobre DDR4."
+  }
+}

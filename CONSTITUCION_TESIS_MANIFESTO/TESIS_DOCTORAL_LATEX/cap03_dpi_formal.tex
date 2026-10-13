@@ -112,29 +112,33 @@ I(Q; \mathbf{e}_t) \le I(Q; t) \le I(Q; \mathbf{p}) \le I(Q; \mathbf{l}) \le I(Q
 \label{eq:dpi_chain}
 \end{equation}
 
-\begin{corollary}[Pérdida Estricta de Información por Cuantización Finitaria]
+\begin{corollary}[Identidad de Pérdida de Información por Cadena de Markov]
 \label{cor:dpi_acumulada}
-En el pipeline de tokenización $Q \to \mathbf{h} \to \mathbf{l} \to \mathbf{p} \to t \to \mathbf{e}_t$,
-la información sobre el estado latente $\mathbf{h}$ o la consulta $Q$ disponible
-en el embedding del receptor $\mathbf{e}_t$ satisface:
+Bajo la cadena de Markov de tokenización $Q \to \mathbf{h} \to \mathbf{l} \to \mathbf{p} \to t \to \mathbf{e}_t$,
+la discrepancia de información sobre la consulta $Q$ entre la representación continua $\mathbf{h}$
+y el token discreto $t$ satisface exactamente:
 \begin{equation}
-I(Q; \mathbf{e}_t) \le I(Q; t) \le I(Q; \mathbf{h}) - H(\mathbf{h} \mid t)
+I(Q; \mathbf{h}) - I(Q; t) = I(Q; \mathbf{h} \mid t) \ge 0
 \end{equation}
-donde la desigualdad es \textbf{estricta} ($I(Q; t) < I(Q; \mathbf{h})$) siempre que 
-el soporte efectivo de la distribución de $\mathbf{h}$ tenga cardinalidad 
-superior al tamaño del vocabulario: $|\text{supp}(\mathbf{h})| > |V|$.
+donde la pérdida es \textbf{estricta} ($I(Q; t) < I(Q; \mathbf{h})$) si y solo si
+la información mutua condicional $I(Q; \mathbf{h} \mid t) > 0$.
 \end{corollary}
 
 \begin{proof}
-La aplicación de muestreo o cuantización $\mathbf{h} \mapsto t \in \{0, \dots, |V|-1\}$ 
-particiona el espacio continuo $\R^D$ (o la esfera $S^{D-1}$) en $|V|$ regiones de Voronoi 
-$\{R_k\}_{k=1}^{|V|}$. Como $|\text{supp}(\mathbf{h})| > |V|$, existe al menos una región $R_k$ 
-con medida no nula que contiene infinitos estados $\mathbf{h}_1 \neq \mathbf{h}_2$ mapeados al 
-mismo token $t = k$. La aplicación es estrictamente no-inyectiva. Por el teorema de suficiencia 
-de Kolmogorov-Blackwell, $t$ es un estadístico suficiente para $\mathbf{h}$ si y solo si la 
-distribución condicional $P(\mathbf{h} \mid t)$ no depende de $Q$. Dado que $\mathbf{h}$ preserva 
-grados de libertad continuos ortogonales a la proyección de logits, $H(\mathbf{h} \mid t) > 0$, 
-lo que garantiza $\Delta I = I(Q; \mathbf{h}) - I(Q; t) > 0$. \qed
+Por la regla de la cadena para la información mutua aplicada a la terna $(Q, \mathbf{h}, t)$:
+\begin{equation}
+I(Q; \mathbf{h}, t) = I(Q; t) + I(Q; \mathbf{h} \mid t) = I(Q; \mathbf{h}) + I(Q; t \mid \mathbf{h})
+\end{equation}
+Dado que $Q \to \mathbf{h} \to t$ forma una cadena de Markov, $t$ es condicionalmente independiente de $Q$ dado $\mathbf{h}$,
+lo que implica $I(Q; t \mid \mathbf{h}) = 0$. Igualando ambos desarrollos se obtiene de forma inmediata:
+\begin{equation}
+I(Q; \mathbf{h}) - I(Q; t) = I(Q; \mathbf{h} \mid t)
+\end{equation}
+La no-negatividad de la información mutua condicional ($I(Q; \mathbf{h} \mid t) \ge 0$) demuestra la cota monótona.
+Asimismo, bajo un operador de cuantización particionante $\mathcal{Q}_\Delta: \R^D \to \{0, \dots, |V|-1\}$,
+cuando la variedad latente preserva grados de libertad informativos sobre $Q$ dentro de la celda de Voronoi
+$\mathcal{V}_k = \mathcal{Q}_\Delta^{-1}(k)$, la distribución condicional $P(Q \mid \mathbf{h})$ conserva varianza
+residual dependiente de $Q$ condicionada al token $t$, asegurando $I(Q; \mathbf{h} \mid t) > 0$. \qed
 \end{proof}
 
 \subsection{Cuantificación de la Pérdida}
@@ -229,10 +233,41 @@ Es decir, PMTP alcanza el límite superior de la DPI: el canal es suficiente.
 La Información Mutua se preserva al $100\%$.
 
 \begin{certifiedbox}
-\textbf{Verificación empírica (V762, Exit Code 0):}
+\textbf{Verificación empírica inicial (V762, Exit Code 0):}
 El PMTP Zero-Copy fue verificado con $D = 10^6$, transferencia de $8\,\text{MB}$.
 Resultado: Max Bit Difference $= 0.0000 \times 10^{+0}$.
 La copia bit-a-bit exacta confirma el canal suficiente.
+\end{certifiedbox}
+
+\subsection{Evaluación Asintótica Multi-Canal: Canales 1D Lossy vs.\ PMTP-v4}
+\label{subsec:eval_dpi_multicanal}
+
+Para contrastar empíricamente la cota teórica del Teorema~\ref{thm:dpi} en hardware de silicio real, se evaluaron cinco configuraciones de canal para dimensiones $D \in \{10^3, 10^4, 10^5, 10^6\}$ sobre la variedad esférica unitaria $\mathcal{S}^{D-1}$ en doble precisión (FP64):
+\begin{enumerate}
+    \item \textbf{Canal C0 --- PMTP-v4 Zero-Copy:} Bus de memoria compartida nativa con descriptor canónico empaquetado de 128 bytes y leases RCU sin copia de payload intermedio.
+    \item \textbf{Canal C1 --- JSON Lossless (FP64):} Serialización textual que retiene los 17 dígitos significativos estándar de IEEE 754. Preserva la entropía a costa de una severa sobrecarga de serialización ($2.77\text{--}2.94\times$ de expansión de bytes) y latencia $O(D)$.
+    \item \textbf{Canal C2 --- Cuantización a float32:} Conversión a precisión simple, emulando la inferencia estándar en aceleradores GPU/TPU.
+    \item \textbf{Canal C3 --- Truncamiento Textual a 6 Dígitos Significativos:} Simulación de interfaces de serialización en APIs REST y registros de auditoría.
+    \item \textbf{Canal C4 --- Simulación de Token BPE (4 caracteres):} Cuello de botella severo inducido por vocabulario finito y discretización posicional de LLMs convencionales.
+\end{enumerate}
+
+La Tabla~\ref{tab:pmtp_vs_1d_dpi_v2} y la Figura~\ref{fig:dpi_benchmark_empirico} sintetizan las métricas crudas registradas en silicio (Exit Code 0, certificado bajo Teorema 6.1v2 en PostgreSQL 16 con ID \#59 y Hecho \#130).
+
+\input{table_dpi_pmtp_vs_1d}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.98\textwidth]{figures/dpi_entropy_and_latency.png}
+\caption{Evaluación Empírica del Cuello de Botella 1D vs.\ PMTP-v4. \textbf{A:} Latencia round-trip de transmisión (ms en escala logarítmica). \textbf{B:} Pérdida entrópica acumulada $\Delta H$ (bits en escala symlog), confirmando la violación masiva del DPI en canales con cuantización o tokenización discreta ($\Delta H \propto D$).}
+\label{fig:dpi_benchmark_empirico}
+\end{figure*}
+
+\begin{certifiedbox}
+\textbf{Certificación en Silicio Real (Teorema 6.1v2 / Hecho \#130):}
+\begin{itemize}
+    \item \textbf{Destrucción Entrópica Masiva:} Para $D = 10^6$, el canal de tokenización discreta destruye $\Delta H = 42{,}462{,}939.2\,\text{bits}$, induciendo un desvío geodésico catastrófico $\theta = 1.555\,\text{rad}$ ($\approx 89.1^\circ$), haciendo que el vector reconstruido sea cuasi-ortogonal al original en $\mathcal{S}^{D-1}$.
+    \item \textbf{Invarianza PMTP-v4:} $\Delta H = 0.000\,\text{bits}$, $\theta = 0.000\,\text{rad}$, y verificación criptográfica SHA-256 bit a bit idéntica en todas las dimensiones analizadas, alcanzando una latencia sub-milisegundo ($587\,\mu\text{s}$ para $D=10^3$).
+\end{itemize}
 \end{certifiedbox}
 
 \section{La Frontera de Huffman y los Límites del Protocolo PMTP}

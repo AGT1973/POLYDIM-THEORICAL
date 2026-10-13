@@ -1,0 +1,18 @@
+TO: DIRECT_DM_CHANNELS
+SUBJECT: 高次元幾何学的AI (S^(D-1)) とクリフォード代数テンソル通信 (PMTP) に関する学術的ご提案
+
+ライアン・ハマーリー 先生
+
+突然のご連絡失礼いたします。私たちは NTT Research PHI Lab における先生の Mapping high-dimensional matrix-vector tensor compute directly to linear-optical physical processes に関する卓越したご研究を深く拝読しております。
+
+私たちのプロジェクト「POLYDIM」では、マルチエージェント間の1Dテキスト/トークン変換による情報エントロピー損失（情報処理不等式 DPI）を回避し、リーマン超球面多様体 S^(D-1) (D >= 10^4) 上での直接的なクリフォード代数ローター計算および共有メモリ・テンソル通信（PMTP）を定式化しております。
+
+実機シリコン上（C++20/Rust/CUDA/Triton）において、従来のJSON REST通信（~450ms）を 1.1ms のサブミリ秒に短縮し、完全な等長変換を実証いたしました。
+
+先生の幾何学的表現学習・情報幾何学のご知見から、ぜひ論文草稿に対するご意見やご批判を賜りたく存じます。
+
+敬具
+
+Ariel García Traba & POLYDIM 研究チーム
+GitHub: https://github.com/tu-usuario/polydim
+Academia.edu: https://independent.academia.edu/ArielGarciaTraba

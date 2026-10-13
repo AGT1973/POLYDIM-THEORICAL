@@ -1,0 +1,16 @@
+[
+  {
+    "to": "pkanerva@berkeley.edu",
+    "name": "Pentti Kanerva",
+    "org": "UC Berkeley (Redwood Center for Theoretical Neuroscience)",
+    "subject": "POLYDIM Framework: High-Dimensional Native Tensor Passing ($S^{D-1}$) & Hardware-Level Interop",
+    "body": "Dear Pentti Kanerva,\n\nI have been following your work at UC Berkeley (Redwood Center for Theoretical Neuroscience) regarding Founder of Sparse Distributed Memory (SDM) & Hyperdimensional Computing.\n\nAt POLYDIM, we have been formalizing a paradigm for non-tokenized, continuous latent space communication between AI agents, operating directly on Riemannian hyperspherical manifolds (S^(D-1), D >= 10^4) with Clifford algebra rotors and zero-copy shared memory tensor passing (PMTP).\n\nKey highlights:\n- Eliminates the 1D text/JSON tokenization bottleneck across multi-agent pipelines.\n- Preserves geometric entropy according to Data Processing Inequality (DPI).\n- Sub-millisecond FFI execution with native CUDA C++20, Triton, and Rust Safe-SIMD kernels.\n\nWe would be honored to share our latest formal preprint and empirical benchmarks with you:\nEmpirical benchmarks and formal Clifford rotor proofs on S^(D-1)\n\nLooking forward to your critical feedback and thoughts.\n\nBest regards,\n\nAriel García Traba & Antigravity POLYDIM Team\nRepository: https://github.com/tu-usuario/polydim\n"
+  },
+  {
+    "to": "jan_rabaey@berkeley.edu",
+    "name": "Jan Rabaey",
+    "org": "UC Berkeley (EECS)",
+    "subject": "POLYDIM Framework: High-Dimensional Native Tensor Passing ($S^{D-1}$) & Hardware-Level Interop",
+    "body": "Dear Jan Rabaey,\n\nI have been following your work at UC Berkeley (EECS) regarding Low-power silicon architecture for HDC.\n\nAt POLYDIM, we have been formalizing a paradigm for non-tokenized, continuous latent space communication between AI agents, operating directly on Riemannian hyperspherical manifolds (S^(D-1), D >= 10^4) with Clifford algebra rotors and zero-copy shared memory tensor passing (PMTP).\n\nKey highlights:\n- Eliminates the 1D text/JSON tokenization bottleneck across multi-agent pipelines.\n- Preserves geometric entropy according to Data Processing Inequality (DPI).\n- Sub-millisecond FFI execution with native CUDA C++20, Triton, and Rust Safe-SIMD kernels.\n\nWe would be honored to share our latest formal preprint and empirical benchmarks with you:\nEmpirical benchmarks and formal Clifford rotor proofs on S^(D-1)\n\nLooking forward to your critical feedback and thoughts.\n\nBest regards,\n\nAriel García Traba & Antigravity POLYDIM Team\nRepository: https://github.com/tu-usuario/polydim\n"
+  }
+]

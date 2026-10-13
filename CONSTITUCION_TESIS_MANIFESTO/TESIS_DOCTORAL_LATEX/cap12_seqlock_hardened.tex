@@ -107,59 +107,88 @@ y produce UAF:
 El paso 1 y 3 pueden intercalarse porque bajo Acquire/Release no existe un
 orden total que fuerce a W a ver el estado DESTROYING antes de incrementar.
 
-\subsection{La Corrección con SeqCst (V762)}
+\subsection{La Corrección con Palabra Atómica Unificada (64-bit Packed CAS)}
 
-\begin{lstlisting}[style=ruststyle, caption={Protocolo Quiescente (CORRECTO --- V762)}, label=lst:seqcst_correct]
-// VERSIÓN CORRECTA - SeqCst - SIN UAF
+Para erradicar de raíz la ventana de carrera de \textit{Use-After-Free} (UAF) donde un hilo destructor
+observa \texttt{active\_ops == 0} y desasigna el nodo antes de que un lector ejecute \texttt{fetch\_add},
+el protocolo unifica el estado del ciclo de vida y el contador de lectores en una \textbf{única palabra atómica de 64 bits}
+(\texttt{AtomicU64 control}):
+\begin{itemize}
+\item \textbf{Bit 63}: Bandera de destrucción (\texttt{DESTROYING\_MASK = 1ULL << 63}).
+\item \textbf{Bits 0--62}: Contador de lectores concurrentes activos (\texttt{READERS\_MASK = $\sim$(1ULL << 63)}).
+\end{itemize}
+
+\begin{lstlisting}[style=ruststyle, caption={Protocolo Quiescente con Palabra Atómica Unificada (Cierre Estricto UAF)}, label=lst:packed_cas_correct]
+// PROTOCOLO ATÓMICO UNIFICADO (PACKED CAS) - SIN VENTANA UAF
+const DESTROYING_BIT: u64 = 1 << 63;
+const READERS_MASK: u64   = !DESTROYING_BIT;
+
 fn begin_op(node: &PmtpNode) -> bool {
-    // CHECK 1: SeqCst load - establece posición en el orden total S
-    if node.state.load(Ordering::SeqCst) != STATE_RUNNING {
-        return false;
+    let mut current = node.control.load(Ordering::Acquire);
+    loop {
+        // Si el bit de destrucción está activo, rechazar inmediatamente
+        if (current & DESTROYING_BIT) != 0 {
+            return false;
+        }
+        let next = current + 1; // Incrementa active_readers atómicamente
+        match node.control.compare_exchange_weak(
+            current,
+            next,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        ) {
+            Ok(_) => return true, // Garantizado: reader registrado sin UAF
+            Err(actual) => current = actual,
+        }
     }
-    // Incremento atómico: también SeqCst
-    node.active_ops.fetch_add(1, Ordering::SeqCst);
-    // CHECK 2 CRÍTICO: segundo load SeqCst
-    // Si free() ocurrió entre los dos checks, este load verá DESTROYING
-    // porque existe el orden total S que garantiza la visibilidad
-    if node.state.load(Ordering::SeqCst) != STATE_RUNNING {
-        // Alguien hizo free() en la ventana -> revertir y abortar
-        node.active_ops.fetch_sub(1, Ordering::SeqCst);
-        return false;
+}
+
+fn end_op(node: &PmtpNode) {
+    node.control.fetch_sub(1, Ordering::Release);
+}
+
+fn free_node(node: &PmtpNode) {
+    // 1. Marca atómicamente el bit de destrucción
+    let mut current = node.control.load(Ordering::Acquire);
+    loop {
+        if (current & DESTROYING_BIT) != 0 {
+            return; // Ya en destrucción
+        }
+        match node.control.compare_exchange_weak(
+            current,
+            current | DESTROYING_BIT,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        ) {
+            Ok(_) => break,
+            Err(actual) => current = actual,
+        }
     }
-    true  // Garantizado: el nodo existe y active_ops >= 1
+    // 2. Espera quiescente a que los lectores en vuelo culminen
+    while (node.control.load(Ordering::Acquire) & READERS_MASK) != 0 {
+        std::hint::spin_loop();
+    }
+    // 3. Desasignación física segura de memoria
+    unsafe { deallocate_physical(node); }
 }
 \end{lstlisting}
 
-\begin{theorem}[Corrección del Protocolo de Quiescencia SeqCst]
-\label{thm:quiescence}
-Con todas las operaciones en \texttt{SeqCst}, el protocolo de begin\_op/end\_op/free
-en V762 es libre de Data Races y Use-After-Free.
+\begin{theorem}[Invarianza de Vida del Bloque de Control bajo Packed-CAS]
+\label{thm:quiescence_packed}
+El protocolo de control unificado empaquetado (\texttt{control: AtomicU64}) garantiza
+ausencia estricta de Data Races y Use-After-Free en arquitecturas x86\_64 y ARMv8.
 \end{theorem}
 
 \begin{proof}
-Existe un orden total $S$ (por Teorema~\ref{thm:seqcst}) sobre todas las operaciones
-SeqCst. Sean los eventos:
-\begin{itemize}
-\item $B_1$: primer \texttt{load(SeqCst)} en begin\_op
-\item $I$: \texttt{fetch\_add(1, SeqCst)} en begin\_op
-\item $B_2$: segundo \texttt{load(SeqCst)} en begin\_op
-\item $C$: \texttt{CAS(RUNNING $\to$ DESTROYING, SeqCst)} en free
-\item $L$: \texttt{load(active\_ops, SeqCst)} en free
-\end{itemize}
-
-\textbf{Caso A:} $I \prec_S C$ en el orden total $S$.
-Entonces $L$ (que ocurre después de $C$) leerá el valor escrito por $I$,
-viendo \texttt{active\_ops $\ge$ 1}. Free no destruirá hasta que end\_op decremente.
-\textbf{No hay UAF.}
-
-\textbf{Caso B:} $C \prec_S I$.
-Entonces $B_2$ (que ocurre después de $I$, después de $C$) leerá el estado
-\texttt{DESTROYING} establecido por $C$. begin\_op hace \texttt{fetch\_sub(1)} y retorna false.
-\textbf{No hay UAF.}
-
-No existe Caso C ($I \prec_S C$ y $B_2$ lee RUNNING) porque en el orden total $S$,
-si $C \prec_S B_2$, entonces $B_2$ debe leer un valor escrito después de $C$ en $S$,
-que es \texttt{DESTROYING}.
+Toda transición de registro de lectura $\mathcal{T}_{\text{reader}}: c \mapsto c + 1$ y de
+marcado de destrucción $\mathcal{T}_{\text{destroy}}: c \mapsto c \mid \text{BIT}_{63}$
+se ejecutan como instrucciones atómicas RMW (\textit{Read-Modify-Write}) sobre la misma dirección de memoria física.
+Por la linealización estricta de las operaciones RMW sobre una misma celda atómica:
+\begin{enumerate}
+\item Si $\mathcal{T}_{\text{reader}}$ linealiza antes de $\mathcal{T}_{\text{destroy}}$, el destructor observa necesariamente $\text{readers} \ge 1$, bloqueando la desasignación física en el bucle quiescente hasta que \texttt{end\_op} emita \texttt{fetch\_sub(1)}.
+\item Si $\mathcal{T}_{\text{destroy}}$ linealiza antes de $\mathcal{T}_{\text{reader}}$, la instrucción CAS del lector lee el bit 63 activo y falla de inmediato, retornando \texttt{false} sin acceder a los datos internos del nodo.
+\end{enumerate}
+No existe interleaving intermedio donde el destructor desasigne la memoria mientras un lector incrementa el contador. \qed
 \end{proof}
 
 \section{La Verificación con Loom: Exploración Exhaustiva del Modelo}

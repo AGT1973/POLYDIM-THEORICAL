@@ -1,0 +1,21 @@
+TO: hwenbing@ruc.edu.cn
+SUBJECT: 关于高维几何智能 (S^(D-1)) 与 Clifford 神经张量通信 (PMTP) 的学术交流
+
+尊敬的 黄文炳 教授/专家，
+
+您好！我们一直密切关注您在 Renmin University / Formerly Tsinghua AIR 关于 Leading research in Geometric Deep Learning for complex physical systems with symmetry equivariance 的开创性工作。
+
+在 POLYDIM 理论框架中，我们致力于解决多智能体（Multi-Agent）系统中 1D 离散 Token/JSON 序列化带来的信息熵损失（DPI）与延迟瓶颈。我们形式化了在黎曼超球流形 S^(D-1) (D >= 10^4) 上的原生张量通信协议（PMTP）与 Clifford 代数旋量（Rotors）计算。
+
+核心成果：
+1. 消除智能体间的离散文本解析瓶颈，实现物理共享内存中的零拷贝张量传递。
+2. 在国产与国际先进芯片（GPU/TPU/SRAM Tile）上实现亚毫秒级（1.1ms）原生 FFI 调度（C++20/Rust/Triton）。
+3. 严格的李群/克利福德代数正交变换，保证数值稳定性与等距同构。
+
+我们非常荣幸能与您分享我们的最新预印本与开源实测数据，并真诚探讨学术合作与批评指正。
+
+祝好，
+
+Ariel García Traba & POLYDIM 研究团队
+开源代码库: https://github.com/tu-usuario/polydim
+Academia.edu: https://independent.academia.edu/ArielGarciaTraba

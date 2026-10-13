@@ -45,27 +45,28 @@ $\alpha_k$, el producto de solapamientos satisface:
 Para un ciclo ($\alpha_n = \alpha_0$), los factores de fase se cancelan exactamente.
 \end{theorem}
 
-\section{Interpretación en $S^{D-1}$: Curvatura Acumulada}
+\section{Interpretación en $S^{D-1}$: Fase Geométrica y Holonomía de Clifford}
 
-En POLYDIM, los estados son puntos $\mathbf{x}_k \in S^{D-1}$ (vectores unitarios reales).
-El solapamiento cuántico $\langle\psi_k|\psi_{k+1}\rangle$ corresponde al producto
-interior $\langle \mathbf{x}_k, \mathbf{x}_{k+1} \rangle \in [-1, 1]$.
-
-Para un ciclo de $n$ rotaciones de Rodrigues sobre $S^{D-1}$, el invariante de Bargmann-Pancharatnam es:
-
+En el espacio euclidiano real $\mathbb{R}^D$, el producto interno $\langle \mathbf{x}_k, \mathbf{x}_{k+1} \rangle$ es estrictamente escalar y real; por ende, $\prod_{k=0}^{n-1} \langle \mathbf{x}_k, \mathbf{x}_{k+1} \rangle \in \mathbb{R}$, cuyo argumento convencional es trivialmente $0$ o $\pi$. Para capturar la verdadera fase geométrica (holonomía) en $S^{D-1}$, el formalismo debe elevarse al álgebra geométrica de Clifford $\mathcal{C}\ell(D)$ mediante el producto geométrico:
 \begin{equation}
-\phi_{\text{POLYDIM}} = \arg\left(\prod_{k=0}^{n-1} \langle \mathbf{x}_k, \mathbf{x}_{k+1} \rangle\right)
-= \sum_{k=0}^{n-1} \text{sgn}(\langle \mathbf{x}_k, \mathbf{x}_{k+1}\rangle) \cdot \theta_k
-\label{eq:bp_polydim}
+\mathbf{x}_k \mathbf{x}_{k+1} = \langle \mathbf{x}_k, \mathbf{x}_{k+1} \rangle + \mathbf{x}_k \wedge \mathbf{x}_{k+1} = \cos\theta_k + \mathbf{B}_k \sin\theta_k = \exp(\mathbf{B}_k \theta_k)
+\end{equation}
+donde $\mathbf{B}_k = \frac{\mathbf{x}_k \wedge \mathbf{x}_{k+1}}{\|\mathbf{x}_k \wedge \mathbf{x}_{k+1}\|}$ es el 2-vector (bivector unitario) que define el plano osculador de la geodésica, satisfaciendo $\mathbf{B}_k^2 = -1$.
+
+Para un ciclo cerrado de $n$ estados $\mathbf{x}_0, \mathbf{x}_1, \dots, \mathbf{x}_n = \mathbf{x}_0$ en $S^{D-1}$, el invariante holonómico de Bargmann-Pancharatnam generalizado es el rotor resultante en $\operatorname{Spin}(D) \subset \mathcal{C}\ell^+(D)$:
+\begin{equation}
+\mathcal{R}_{\text{loop}} = \prod_{k=0}^{n-1} \mathbf{x}_k \mathbf{x}_{k+1} \in \operatorname{Spin}(D)
+\label{eq:bp_clifford}
 \end{equation}
 
-donde $\theta_k = \arccos(\langle \mathbf{x}_k, \mathbf{x}_{k+1}\rangle)$ es la distancia
-geodésica entre estados consecutivos.
+La fase geométrica holonómica acumulada $\Omega_{\text{BP}}$ corresponde al ángulo bivectorial inducido por la curvatura del área encerrada sobre la variedad esférica:
+\begin{equation}
+\Omega_{\text{BP}} = 2 \arccos\left(\langle \mathcal{R}_{\text{loop}} \rangle_0\right) = \iint_{\Sigma} K \, dA \pmod{2\pi}
+\end{equation}
+donde $\langle \cdot \rangle_0$ denota la parte escalar del multigrado de Clifford y $\Sigma$ es la superficie contenida por el lazo geodésico sobre $S^{D-1}$.
 
-\begin{proposition}[Invariante BP como Detector de Holonomía]
-Si $\phi_{\text{POLYDIM}} \ne 0$ para un ciclo cerrado de rotaciones de Rodrigues,
-entonces las rotaciones no conmutan y el ciclo produce holonomía --- el vector
-de estado final no coincide con el inicial incluso si el camino regresa al mismo punto.
+\begin{proposition}[Invariante de Rotor como Detector de Holonomía]
+Si $\mathcal{R}_{\text{loop}} \ne 1$, el ciclo geodésico no conmuta y produce holonomía neta: el transporte paralelo de un vector tangente a lo largo del circuito cerrado experimenta una rotación neta dada por el rotor $\mathcal{R}_{\text{loop}}$.
 \end{proposition}
 
 \section{Relevancia para POLYDIM: Detección de Deriva Acumulada}

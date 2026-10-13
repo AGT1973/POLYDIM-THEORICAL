@@ -33,3 +33,5 @@ __pycache__/
 *.log
 *.tmp
 _HISTORICO/
+*.rar
+*.sqlite

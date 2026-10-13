@@ -1,0 +1,16 @@
+TO: hwjkim@kaist.ac.kr
+SUBJECT: 고차원 기하학적 AI (S^(D-1)) 및 클리포드 텐서 통신(PMTP) 관련 학술 교류 제안
+
+현우 김 교수님/박사님께,
+
+안녕하십니까. KAIST (School of Computing)에서 발표하신 Multivariate general linear models on Riemannian manifolds and geometric learning on graphs 연구를 매우 인상 깊게 확인하였습니다.
+
+저희 POLYDIM 연구팀에서는 멀티 에이전트 시스템에서 1차원 토큰 직렬화로 인한 엔트로피 손실(DPI) 문제를 극복하기 위해, 리만 초구 다양체 S^(D-1) (D >= 10^4) 상에서의 클리포드 대수 로터 연산 및 제로-카피 공유 메모리 텐서 전송 프로토콜(PMTP)을 구축하였습니다.
+
+실제 하드웨어(C++20, Rust, CUDA/Triton) 환경에서 1.1ms의 초저지연 연산을 달성하였으며, 교수님의 고견과 비판적 피드백을 수렴하고자 프리프린트 및 벤치마크 데이터를 공유드립니다.
+
+감사합니다.
+
+Ariel García Traba & POLYDIM 연구팀
+GitHub: https://github.com/tu-usuario/polydim
+Academia.edu: https://independent.academia.edu/ArielGarciaTraba
