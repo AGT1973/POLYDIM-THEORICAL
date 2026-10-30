@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1315.999625 685.4000000000001" width="1315.999625" height="685.4000000000001" style="--bg:#1F1F1F;--fg:#CCCCCC;--line:#CCCCCC;--accent:#0078D4;--muted:#CCCCCCCC;--surface:#181818;--border:#CCCCCC;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="5" refX="7" refY="2.5" orient="auto">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="8" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse">
+    <polygon points="8 0, 0 2.5, 8 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+</defs>
+<g class="subgraph" data-id="CORE" data-label="🧮 NÚCLEO GEOMÉTRICO">
+  <rect x="64.08312500000002" y="130.90000000000006" width="513.9549999999999" height="96.9" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="64.08312500000002" y="130.90000000000006" width="513.9549999999999" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="76.08312500000002" y="144.90000000000006" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">🧮 NÚCLEO GEOMÉTRICO</text>
+</g>
+<g class="subgraph" data-id="SILICON" data-label="⚙️ SILICIO">
+  <rect x="72.379875" y="287.80000000000007" width="338.783" height="181.8" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="72.379875" y="287.80000000000007" width="338.783" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="84.379875" y="301.80000000000007" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">⚙️ SILICIO</text>
+</g>
+<g class="subgraph" data-id="FRONTIER" data-label="🔭 FRONTERA">
+  <rect x="960.8966249999999" y="58" width="297.10299999999995" height="181.8" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="960.8966249999999" y="58" width="297.10299999999995" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="972.8966249999999" y="72" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">🔭 FRONTERA</text>
+</g>
+<g class="subgraph" data-id="AGENTIC" data-label="🤖 AGENTIVIDAD">
+  <rect x="598.0381249999999" y="287.8" width="342.85849999999994" height="266.70000000000005" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="598.0381249999999" y="287.8" width="342.85849999999994" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="610.0381249999999" y="301.8" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">🤖 AGENTIVIDAD</text>
+</g>
+<polyline class="edge" data-from="L1" data-to="L11" data-style="thick" data-arrow-start="false" data-arrow-end="true" points="489.93412500000005,217.80000000000004 489.93412500000005,274.8 675.7681249999999,274.8 675.7681249999999,416.70000000000005" fill="none" stroke="var(--_line)" stroke-width="2" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L1" data-to="L8" data-style="thick" data-arrow-start="false" data-arrow-end="true" points="489.93412500000005,217.80000000000004 489.93412500000005,274.8 813.5674583333333,274.8 813.5674583333333,331.8" fill="none" stroke="var(--_line)" stroke-width="2" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L7" data-to="L8" data-style="thick" data-arrow-start="false" data-arrow-end="true" points="1164.7086249999998,217.80000000000004 1164.7086249999998,274.8 813.5674583333333,274.8 813.5674583333333,331.8" fill="none" stroke="var(--_line)" stroke-width="2" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L12" data-to="L8" data-style="thick" data-arrow-start="false" data-arrow-end="true" points="1076.4176249999998,138.9 1076.4176249999998,274.8 813.5674583333333,274.8 813.5674583333333,331.8" fill="none" stroke="var(--_line)" stroke-width="2" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L3" data-to="L5" data-style="thick" data-arrow-start="false" data-arrow-end="true" points="139.96062500000002,217.80000000000004 139.96062500000002,274.80000000000007 148.627875,274.80000000000007 148.627875,331.80000000000007" fill="none" stroke="var(--_line)" stroke-width="2" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L2" data-to="L4" data-style="thick" data-arrow-start="false" data-arrow-end="true" points="308.83412500000003,217.80000000000004 308.83412500000003,269.80000000000007 314.537375,269.80000000000007 314.537375,331.80000000000007" fill="none" stroke="var(--_line)" stroke-width="2" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L5" data-to="L3" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="128.54520833333333,368.70000000000005 128.5452083333333,511.6000000000001 40.04,511.6000000000001 40.04,112.90000000000006 120.00145833333337,112.90000000000006 120.00145833333337,180.90000000000003" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L10" data-to="L7" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="836.1201249999999,538.5 836.1201249999999,584.5 1267.999625,584.5 1267.999625,40 1190.4722916666665,40 1190.4722916666665,180.90000000000003" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L11" data-to="L1" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="675.7681249999999,453.6 675.7681249999999,572.5 950.8966249999999,572.5 950.8966249999999,40 465.8994583333333,40 465.8994583333333,180.90000000000003" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L6" data-to="L1" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="314.53737499999994,453.6000000000001 314.537375,584.5 588.0381249999999,584.5 588.0381249999999,112.90000000000006 513.9687916666667,112.90000000000006 513.9687916666667,180.90000000000003" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="USER" data-to="L3" data-style="thick" data-arrow-start="false" data-arrow-end="true" points="159.91979166666667,76.90000000000006 159.9197916666667,180.90000000000003" fill="none" stroke="var(--_line)" stroke-width="2" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L3" data-to="OUT" data-style="thick" data-arrow-start="false" data-arrow-end="true" points="139.96062500000002,217.80000000000004 139.96062500000002,274.80000000000007 203.66729166666664,274.80000000000007 203.66729166666664,608.5" fill="none" stroke="var(--_line)" stroke-width="2" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L5" data-to="OUT" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="148.627875,368.70000000000005 148.627875,488.6 203.66729166666664,488.6 203.66729166666664,608.5" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L12" data-to="OUT" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1076.4176249999998,138.9 1076.4176249999998,488.6 203.66729166666664,488.6 203.66729166666664,608.5" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L4" data-to="L6" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="314.537375,368.70000000000005 314.537375,416.70000000000005" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L12" data-to="L7" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1126.178125,138.9 1126.178125,150.9 1138.944958333333,150.9 1138.944958333333,180.90000000000003" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L8" data-to="L9" data-style="thick" data-arrow-start="false" data-arrow-end="true" points="836.1201249999999,368.70000000000005 836.1201249999999,416.70000000000005" fill="none" stroke="var(--_line)" stroke-width="2" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L8" data-to="L11" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="791.0147916666666,368.70000000000005 791.0147916666666,380.70000000000005 696.3447916666667,380.70000000000005 696.3447916666667,416.70000000000005" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="L9" data-to="L10" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="836.1201249999999,453.6 836.1201249999999,501.6" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<g class="node" data-id="USER" data-label="👤 turing=4" data-shape="stadium">
+  <rect x="105.97029166666668" y="40.00000000000006" width="107.899" height="36.900000000000006" rx="18.450000000000003" ry="18.450000000000003" fill="#ffd700" stroke="#b8860b" stroke-width="0.75" />
+  <text x="159.9197916666667" y="58.45000000000006" text-anchor="middle" font-size="13" font-weight="500" fill="#000" dy="4.55">👤 turing=4</text>
+</g>
+<g class="node" data-id="OUT" data-label="📤 Respuesta" data-shape="stadium">
+  <rect x="142.30779166666665" y="608.5" width="122.71900000000001" height="36.900000000000006" rx="18.450000000000003" ry="18.450000000000003" fill="#ffd700" stroke="#b8860b" stroke-width="0.75" />
+  <text x="203.66729166666664" y="626.95" text-anchor="middle" font-size="13" font-weight="500" fill="#000" dy="4.55">📤 Respuesta</text>
+</g>
+<g class="node" data-id="L1" data-label="L1: Stiefel + PMTP" data-shape="rectangle">
+  <rect x="417.83012500000007" y="180.90000000000003" width="144.20799999999997" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="489.93412500000005" y="199.35000000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">L1: Stiefel + PMTP</text>
+</g>
+<g class="node" data-id="L2" data-label="L2: Neumaier ≤10⁻¹⁵" data-shape="rectangle">
+  <rect x="227.83812500000002" y="180.90000000000003" width="161.99200000000002" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="308.83412500000003" y="199.35000000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">L2: Neumaier ≤10⁻¹⁵</text>
+</g>
+<g class="node" data-id="L3" data-label="L3: turing=xx" data-shape="rectangle">
+  <rect x="80.08312500000002" y="180.90000000000003" width="119.755" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="139.96062500000002" y="199.35000000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">L3: turing=xx</text>
+</g>
+<g class="node" data-id="L4" data-label="L4: FFI C++20/Rust" data-shape="rectangle">
+  <rect x="236.87587499999998" y="331.80000000000007" width="155.32299999999998" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="314.537375" y="350.25000000000006" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">L4: FFI C++20/Rust</text>
+</g>
+<g class="node" data-id="L5" data-label="L5: Dual think" data-shape="rectangle">
+  <rect x="88.379875" y="331.80000000000007" width="120.49599999999998" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="148.627875" y="350.25000000000006" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">L5: Dual think</text>
+</g>
+<g class="node" data-id="L6" data-label="L6: HW heterogéneo" data-shape="rectangle">
+  <rect x="233.91187499999998" y="416.70000000000005" width="161.251" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="314.537375" y="435.15000000000003" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">L6: HW heterogéneo</text>
+</g>
+<g class="node" data-id="L7" data-label="L7: SOTA perpetuo" data-shape="rectangle">
+  <rect x="1087.4176249999998" y="180.90000000000003" width="154.582" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1164.7086249999998" y="199.35000000000002" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">L7: SOTA perpetuo</text>
+</g>
+<g class="node" data-id="L12" data-label="L12: Calibración epistémica" data-shape="rectangle">
+  <rect x="976.8966249999999" y="102" width="199.04199999999994" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1076.4176249999998" y="120.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">L12: Calibración epistémica</text>
+</g>
+<g class="node" data-id="L8" data-label="L8: MCP multi-IA" data-shape="rectangle">
+  <rect x="745.9094583333333" y="331.8" width="135.316" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="813.5674583333333" y="350.25" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">L8: MCP multi-IA</text>
+</g>
+<g class="node" data-id="L9" data-label="L9: Tool Genesis" data-shape="rectangle">
+  <rect x="765.498125" y="416.70000000000005" width="141.244" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="836.1201249999999" y="435.15000000000003" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">L9: Tool Genesis</text>
+</g>
+<g class="node" data-id="L10" data-label="L10: Memoria episódica" data-shape="rectangle">
+  <rect x="747.343625" y="501.6" width="177.55299999999997" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="836.1201249999999" y="520.0500000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">L10: Memoria episódica</text>
+</g>
+<g class="node" data-id="L11" data-label="L11: State Delta" data-shape="rectangle">
+  <rect x="614.0381249999999" y="416.70000000000005" width="123.46" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="675.7681249999999" y="435.15000000000003" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">L11: State Delta</text>
+</g>
+</svg>

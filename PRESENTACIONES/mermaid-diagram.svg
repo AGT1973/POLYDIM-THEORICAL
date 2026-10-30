@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1724.868 1552.164" width="1724.868" height="1552.164" style="--bg:#1F1F1F;--fg:#CCCCCC;--line:#CCCCCC;--accent:#0078D4;--muted:#CCCCCCCC;--surface:#181818;--border:#CCCCCC;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="5" refX="7" refY="2.5" orient="auto">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="8" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse">
+    <polygon points="8 0, 0 2.5, 8 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+</defs>
+<g class="subgraph" data-id="ETAPA_1" data-label="🔹 ETAPA 1: TRIBUNAL DE SABIOS &amp; FUENTE FÍSICA (Concurrente No Bloqueante)">
+  <rect x="40" y="40" width="1644.868" height="96.9" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="40" y="40" width="1644.868" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="52" y="54" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">🔹 ETAPA 1: TRIBUNAL DE SABIOS &amp; FUENTE FÍSICA (Concurrente No Bloqueante)</text>
+</g>
+<g class="subgraph" data-id="ORQUESTADOR" data-label="🧠 ORQUESTADOR: Arbitraje Dialéctico Continuo">
+  <rect x="662.0685000000001" y="265.20000000000005" width="374.0549999999999" height="385.4" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="662.0685000000001" y="265.20000000000005" width="374.0549999999999" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="674.0685000000001" y="279.20000000000005" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">🧠 ORQUESTADOR: Arbitraje Dialéctico Continuo</text>
+</g>
+<g class="subgraph" data-id="TEORIA" data-label="📚 TEORÍA Y SILICIO (Memoria Virtual Pura)">
+  <rect x="669.108" y="710.6" width="359.97599999999994" height="229.60000000000002" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="669.108" y="710.6" width="359.97599999999994" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="681.108" y="724.6" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">📚 TEORÍA Y SILICIO (Memoria Virtual Pura)</text>
+</g>
+<g class="subgraph" data-id="PERSISTENCIA" data-label="📦 PERSISTENCIA QUINCUAGESIMAL (Ciclo 50)">
+  <rect x="577.1122499999999" y="1000.2" width="425.30099999999993" height="511.96400000000006" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="577.1122499999999" y="1000.2" width="425.30099999999993" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="589.1122499999999" y="1014.2" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">📦 PERSISTENCIA QUINCUAGESIMAL (Ciclo 50)</text>
+<g class="subgraph" data-id="ETAPA_1" data-label="🔹 ETAPA 1: TRIBUNAL DE SABIOS &amp; FUENTE FÍSICA (Concurrente No Bloqueante)">
+  <rect x="800.7039999999998" y="1459.2640000000001" width="96.78399999999999" height="36.900000000000006" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="800.7039999999998" y="1459.2640000000001" width="96.78399999999999" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="812.7039999999998" y="1473.2640000000001" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">🔹 ETAPA 1: TRIBUNAL DE SABIOS &amp; FUENTE FÍSICA (Concurrente No Bloqueante)</text>
+</g>
+</g>
+<polyline class="edge" data-from="IA1" data-to="DISP" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Emite Falla + Propuesta Técnica" points="336.25050000000005,120.9 336.25050000000005,190.9 418.15725000000003,190.9 418.15725000000003,235.20000000000002 783.1026428571429,235.20000000000002 783.1026428571429,309.20000000000005" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="IA2" data-to="DISP" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Emite Falla + Propuesta Técnica" points="1025.6019999999999,120.9 1025.6019999999999,223.20000000000002 871.0937857142858,223.20000000000002 871.0937857142858,309.20000000000005" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="IA3" data-to="DISP" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Emite Falla + Propuesta Técnica" points="134.4025,120.9 134.40249999999997,202.9 230.97025,202.9 230.97025,247.20000000000002 739.1070714285714,247.20000000000002 739.1070714285714,309.20000000000005" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="IA4" data-to="DISP" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Emite Falla + Propuesta Técnica" points="1263.018,120.9 1263.018,190.9 1230.5729999999999,190.9 1230.5729999999999,235.20000000000002 915.0893571428571,235.20000000000002 915.0893571428572,309.20000000000005" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="IA5" data-to="DISP" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Emite Falla + Propuesta Técnica" points="1528.592,120.9 1528.592,202.9 1449.623,202.9 1449.623,247.20000000000002 959.0849285714287,247.20000000000002 959.0849285714286,309.20000000000005" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="IA6" data-to="DISP" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Emite Falla + Propuesta Técnica" points="672.59,120.9 672.59,223.20000000000002 827.0982142857143,223.20000000000002 827.0982142857143,309.20000000000005" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="SEL" data-to="DB" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="849.096,634.6 849.0959999999999,754.6" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="RAM" data-to="CHK" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="849.0959999999999,924.2 849.0959999999999,1044.2" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="DISP" data-to="PERP" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="849.096,363.00000000000006 849.096,411.00000000000006" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="PERP" data-to="EVAL" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="849.096,447.9000000000001 849.096,495.9000000000001" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="EVAL" data-to="SEL" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="849.096,549.7 849.096,597.7" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="DB" data-to="RAM" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="849.0959999999999,822.4000000000001 849.0959999999999,870.4000000000001" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CHK" data-to="ETAPA_1" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Ciclos 1 al 49 (RAM)" points="879.1066666666666,1194.2533333333333 879.1066666666666,1236.2640000000001 937.7572499999999,1236.2640000000001 937.7572499999999,1423.2640000000001 865.2266666666666,1423.2640000000001 865.2266666666666,1459.2640000000001" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CHK" data-to="DISK" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Ciclo 50 (Disco)" points="819.0853333333332,1194.2533333333333 819.0853333333332,1236.2640000000001 760.4347499999999,1236.2640000000001 760.4347499999999,1340.564" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="DISK" data-to="ETAPA_1" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="760.4347499999999,1411.2640000000001 760.4347499999999,1423.2640000000001 832.9653333333332,1423.2640000000001 832.9653333333332,1459.2640000000001" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<g class="edge-label" data-from="IA1" data-to="DISP" data-label="Emite Falla + Propuesta Técnica">
+  <rect x="333.65725" y="197.9" width="168.526" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="417.92025" y="213.05" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Emite Falla + Propuesta Técnica</text>
+</g>
+<g class="edge-label" data-from="IA2" data-to="DISP" data-label="Emite Falla + Propuesta Técnica">
+  <rect x="941.1019999999997" y="185.9" width="168.526" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="1025.3649999999998" y="201.05" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Emite Falla + Propuesta Técnica</text>
+</g>
+<g class="edge-label" data-from="IA3" data-to="DISP" data-label="Emite Falla + Propuesta Técnica">
+  <rect x="146.47025" y="209.9" width="168.526" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="230.73325" y="225.05" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Emite Falla + Propuesta Técnica</text>
+</g>
+<g class="edge-label" data-from="IA4" data-to="DISP" data-label="Emite Falla + Propuesta Técnica">
+  <rect x="1146.0729999999999" y="197.9" width="168.526" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="1230.3359999999998" y="213.05" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Emite Falla + Propuesta Técnica</text>
+</g>
+<g class="edge-label" data-from="IA5" data-to="DISP" data-label="Emite Falla + Propuesta Técnica">
+  <rect x="1365.123" y="209.9" width="168.526" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="1449.386" y="225.05" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Emite Falla + Propuesta Técnica</text>
+</g>
+<g class="edge-label" data-from="IA6" data-to="DISP" data-label="Emite Falla + Propuesta Técnica">
+  <rect x="588.09" y="185.9" width="168.526" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="672.3530000000001" y="201.05" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Emite Falla + Propuesta Técnica</text>
+</g>
+<g class="edge-label" data-from="CHK" data-to="ETAPA_1" data-label="Ciclos 1 al 49 (RAM)">
+  <rect x="884.2572499999999" y="1267.264" width="106.156" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="937.3352499999999" y="1282.414" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Ciclos 1 al 49 (RAM)</text>
+</g>
+<g class="edge-label" data-from="CHK" data-to="DISK" data-label="Ciclo 50 (Disco)">
+  <rect x="714.9347499999999" y="1267.264" width="90.11800000000001" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="759.9937499999999" y="1282.414" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Ciclo 50 (Disco)</text>
+</g>
+<g class="node" data-id="IA1" data-label="DeepSeek V3 (Tier Pago)" data-shape="rectangle">
+  <rect x="240.80500000000004" y="84" width="190.891" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="336.25050000000005" y="102.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">DeepSeek V3 (Tier Pago)</text>
+</g>
+<g class="node" data-id="IA2" data-label="Claude Opus 4.5 / 4.6 (Thinking)" data-shape="rectangle">
+  <rect x="913.484" y="84" width="224.236" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1025.602" y="102.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Claude Opus 4.5 / 4.6 (Thinking)</text>
+</g>
+<g class="node" data-id="IA3" data-label="Qwen 2.5 72B / Z_IA" data-shape="rectangle">
+  <rect x="56" y="84" width="156.805" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="134.4025" y="102.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Qwen 2.5 72B / Z_IA</text>
+</g>
+<g class="node" data-id="IA4" data-label="Kimi Moonshot (Tier Pago)" data-shape="rectangle">
+  <rect x="1165.7199999999998" y="84" width="194.59599999999998" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1263.0179999999998" y="102.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Kimi Moonshot (Tier Pago)</text>
+</g>
+<g class="node" data-id="IA5" data-label="Gemini Pro (PMTP Shared Memory RAM)" data-shape="rectangle">
+  <rect x="1388.3159999999998" y="84" width="280.552" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1528.5919999999999" y="102.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Gemini Pro (PMTP Shared Memory RAM)</text>
+</g>
+<g class="node" data-id="IA6" data-label="Ariel Red Team Bulldog (Auditor Físico en Silicio &amp; Veto Empírico)" data-shape="rectangle">
+  <rect x="459.6960000000001" y="84" width="425.78799999999984" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="672.59" y="102.45" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Ariel Red Team Bulldog (Auditor Físico en Silicio &amp; Veto Empírico)</text>
+</g>
+<g class="node" data-id="DISP" data-label="Recepción Inmediata &amp; Despacho a Perplexity
+(Sin esperar al resto de las IAs)" data-shape="rectangle">
+  <rect x="695.1115" y="309.20000000000005" width="307.969" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="849.096" y="336.1" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="849.096" dy="-3.9000000000000012">Recepción Inmediata &amp; Despacho a Perplexity</tspan><tspan x="849.096" dy="16.900000000000002">(Sin esperar al resto de las IAs)</tspan></text>
+</g>
+<g class="node" data-id="PERP" data-label="Perplexity Sonar-Pro (SOTA Dialectic)" data-shape="rectangle">
+  <rect x="716.23" y="411.00000000000006" width="265.7319999999999" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="849.096" y="429.45000000000005" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Perplexity Sonar-Pro (SOTA Dialectic)</text>
+</g>
+<g class="node" data-id="EVAL" data-label="⚖️ Evaluación Comparativa:
+Propuesta IA vs Solución Perplexity vs Veto Físico" data-shape="rectangle">
+  <rect x="678.0685000000001" y="495.9000000000001" width="342.0549999999999" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="849.096" y="522.8000000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="849.096" dy="-3.9000000000000012">⚖️ Evaluación Comparativa:</tspan><tspan x="849.096" dy="16.900000000000002">Propuesta IA vs Solución Perplexity vs Veto Físico</tspan></text>
+</g>
+<g class="node" data-id="SEL" data-label="Selección de la Solución Superior / Fusión SOTA" data-shape="rectangle">
+  <rect x="685.108" y="597.7" width="327.97600000000006" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="849.096" y="616.1500000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Selección de la Solución Superior / Fusión SOTA</text>
+</g>
+<g class="node" data-id="DB" data-label="Persistencia Invariable en la Teoría
+POLYDIM_VECDB.sqlite" data-shape="cylinder">
+  <rect x="721.4169999999999" y="761.6" width="255.35799999999998" height="53.80000000000001" fill="var(--_node-fill)" stroke="none" />
+  <line x1="721.4169999999999" y1="761.6" x2="721.4169999999999" y2="815.4000000000001" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="976.7749999999999" y1="761.6" x2="976.7749999999999" y2="815.4000000000001" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="849.0959999999999" cy="815.4000000000001" rx="127.67899999999999" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="849.0959999999999" cy="761.6" rx="127.67899999999999" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="849.0959999999999" y="788.5" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="849.0959999999999" dy="-3.9000000000000012">Persistencia Invariable en la Teoría</tspan><tspan x="849.0959999999999" dy="16.900000000000002">POLYDIM_VECDB.sqlite</tspan></text>
+</g>
+<g class="node" data-id="RAM" data-label="Ejecución Física en Silicio (RAM S^(D-1) / St(D,K))
+Cero archivos .md o .json temporales" data-shape="rectangle">
+  <rect x="685.108" y="870.4000000000001" width="327.97599999999994" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="849.0959999999999" y="897.3000000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="849.0959999999999" dy="-3.9000000000000012">Ejecución Física en Silicio (RAM S^(D-1) / St(D,K))</tspan><tspan x="849.0959999999999" dy="16.900000000000002">Cero archivos .md o .json temporales</tspan></text>
+</g>
+<g class="node" data-id="CHK" data-label="¿Ciclo mod 50 == 0?" data-shape="diamond">
+  <polygon points="849.0959999999999,1044.2 939.1279999999999,1134.232 849.0959999999999,1224.264 759.0639999999999,1134.232" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="849.0959999999999" y="1134.232" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">¿Ciclo mod 50 == 0?</text>
+</g>
+<g class="node" data-id="DISK" data-label="Persistencia Física en Disco (Regla 17)
+ENTREGA_&lt;DATE&gt;_V... con máx 5 archivos base
++ Evaluación Regla 13" data-shape="rectangle">
+  <rect x="593.1122499999999" y="1340.564" width="334.6449999999999" height="70.7" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="760.4347499999999" y="1375.914" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="760.4347499999999" dy="-12.350000000000001">Persistencia Física en Disco (Regla 17)</tspan><tspan x="760.4347499999999" dy="16.900000000000002">ENTREGA_&lt;DATE&gt;_V... con máx 5 archivos base</tspan><tspan x="760.4347499999999" dy="16.900000000000002">+ Evaluación Regla 13</tspan></text>
+</g>
+</svg>

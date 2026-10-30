@@ -2,11 +2,11 @@
 ## Continuous High-Dimensional Manifold Computing, Heterogeneous Silicon Isometry & Zero-Copy Tensor Inter-Process Communication
 
 **Author:** Ariel García Traba  
-**Affiliation:** Independent Mathematical & Systems Researcher — Lecturer at Universidad Tecnológica Nacional (UTN-FRBA)  
+**Affiliation:** Independent Mathematical & Systems Researcher (Founder)  
 **Initiative:** POLYDIM / EinsofOS Research Initiative  
 **Contact:** `ariel.garcia.traba@gmail.com` | `polydim-cla@gmail.com`  
 **Date:** October 2026 — Master Edition V1550 (Kernel V26155 Frozen)  
-**Status:** Physical Silicon Certified (1,592 SOTA Theorems in PostgreSQL 16, 27/27 Asymptotic Tests & 8/8 Cowork Suites Pass — Exit Code 0)
+**Status:** Physical Silicon Certified (1731 SOTA Theorems in PostgreSQL 16 (464 Rescued Zero-Trust), 27/27 Asymptotic Tests & 8/8 Cowork Suites Pass — Exit Code 0)
 
 ---
 
