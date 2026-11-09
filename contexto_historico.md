@@ -74,3 +74,19 @@
   - Traducción canónica al inglés de AGENTS.md, depuración de duplicados, preservación ontológica y vectorización en polydim_vec_db.polydim_embeddings.
 - **Próxima Acción Atómica Unívoca**:
   - Ejecutar la ingesta, deduplicación y vectorización de las 42 Reglas Maestras traducidas al inglés en polydim_vec_db.polydim_embeddings y actualizar C:\Users\eluithi\.gemini\config\AGENTS.en.md.
+
+
+## CHECKPOINT REGLA 13 — 2026-11-09 14:02:44
+- **Conversation ID**: da1a0079-fb18-4d7b-b60a-19c4d55cc710
+- **Hito Central**: Publicación y Distribución Oficial del Tomo Doctoral V4 Monolítico y Reemplazo de la Síntesis de 25 carillas.
+- **Artefactos en Silicio**:
+  - `TESIS_DOCTORAL_TOMO_COMPLETO.md` (129.421 bytes, 127.868 chars, 758 líneas, 11.964 palabras, 56/56 índice, 40 referencias).
+  - `TESIS_DOCTORAL_TOMO_COMPLETO.docx` (94.305 bytes, compilado vía Pandoc 3.10 con Exit Code 0).
+  - Reemplazo confirmado en Google Drive `I:\Mi unidad\01_PAPERS_Y_TEORIA_FORMAL\`.
+  - Publicado en GitHub `AGT1973/POLYDIM-THEORICAL` en commit `5885875` (rama `main`).
+- **Resolución Tribunal de Sabios**: 28/28 Remediaciones (REM-01..28) cerradas con Exit Code 0 (Coisometría QR v2.0, Seqlock ABI v2.1, MTHC v1.4 con MGS2 V_k(R^D) y Gate Hardware, Benchmark 32KB en D=4096, Desglose de Ruido 62.23% lectura + 15.93% T1 = 78.16%).
+- **Estado de Hardware**:
+  - Nodo Local Windows (AMD A4-6300, 16GB): Activo.
+  - Nodo ALADIN (192.168.100.21, i3-8100, 8GB): Apagado térmico seguro vía `sync && shutdown -h now` (power_state=0).
+- **Próxima Acción Atómica Unívoca**:
+  - Monitoreo de Jobs 17, 18 y 20 en IBM Quantum (`check_ibm_jobs_status.py`) y emisión del depósito Zenodo con token una vez autorizado.
